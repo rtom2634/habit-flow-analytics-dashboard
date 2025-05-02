@@ -1,1739 +1,1533 @@
 
-import React, { useState, useEffect } from 'react';
-import { 
-  LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
-  Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend
-} from 'recharts';
+import React, { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Slider } from "@/components/ui/slider";
+import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
+import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, PieChart, Pie, Cell } from "recharts";
+import { Moon, Sun, Menu, X, Bell, Settings, ChevronRight, User, Home, BarChart3, Calendar, Droplets, Coffee, Smartphone, Moon as MoonIcon, Zap, Info, Award, TrendingUp, Heart, Check, AlertCircle } from "lucide-react";
+import { useMobile } from "@/hooks/use-mobile";
+import { toast } from "@/hooks/use-toast";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
+import { motion, AnimatePresence } from "framer-motion";
+import { useLocation, useNavigate } from "react-router-dom";
 
-// Single page application with all components in one file
-const Index = () => {
-  // State for active view
-  const [activeView, setActiveView] = useState<string>('landing');
-  
-  // State for mobile menu
-  const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
-  
-  // State for settings modal
-  const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
-  
-  // State for new habit modal
-  const [newHabitModalOpen, setNewHabitModalOpen] = useState<boolean>(false);
-  
-  // State for notification permissions
-  const [notificationsEnabled, setNotificationsEnabled] = useState<boolean>(false);
+// Mock data for habits
+const mockHabits = [
+  { id: 1, name: "Drink Water", icon: "Droplets", goal: 8, unit: "glasses", color: "habit-blue", data: [6, 7, 8, 6, 8, 7, 8], streak: 5 },
+  { id: 2, name: "Sleep", icon: "Moon", goal: 8, unit: "hours", color: "habit-purple", data: [7, 6.5, 7, 8, 7.5, 8, 6], streak: 7 },
+  { id: 3, name: "Exercise", icon: "Zap", goal: 30, unit: "minutes", color: "habit-green", data: [20, 30, 30, 20, 0, 30, 45], streak: 2 },
+  { id: 4, name: "Read", icon: "Book", goal: 30, unit: "minutes", color: "habit-orange", data: [15, 30, 20, 30, 45, 0, 30], streak: 0 },
+  { id: 5, name: "Meditate", icon: "Heart", goal: 10, unit: "minutes", color: "habit-teal", data: [10, 10, 5, 10, 10, 0, 10], streak: 0 },
+  { id: 6, name: "Screen Time", icon: "Smartphone", goal: 120, unit: "minutes", color: "habit-red", data: [180, 120, 90, 150, 120, 100, 130], streak: 3 },
+  { id: 7, name: "Coffee", icon: "Coffee", goal: 2, unit: "cups", color: "habit-yellow", data: [3, 2, 2, 3, 2, 1, 2], streak: 4 }
+];
 
-  // Current date
-  const today = new Date();
-  const dateOptions: Intl.DateTimeFormatOptions = { weekday: 'long', month: 'long', day: 'numeric' };
-  const currentDate = today.toLocaleDateString('en-US', dateOptions);
-  
-  // State for habits
-  const [habits, setHabits] = useState<Habit[]>([
-    {
-      id: '1',
-      name: 'Drink Water',
-      icon: '💧',
-      target: 8,
-      unit: 'glasses',
-      color: 'blue',
-      progress: 5,
-      streakDays: 12,
-      history: [
-        { date: '2023-05-01', completed: 8 },
-        { date: '2023-05-02', completed: 6 },
-        { date: '2023-05-03', completed: 7 },
-        { date: '2023-05-04', completed: 8 },
-        { date: '2023-05-05', completed: 5 },
-        { date: '2023-05-06', completed: 4 },
-        { date: '2023-05-07', completed: 6 },
-      ],
-    },
-    {
-      id: '2',
-      name: 'Sleep',
-      icon: '😴',
-      target: 8,
-      unit: 'hours',
-      color: 'purple',
-      progress: 7.5,
-      streakDays: 5,
-      history: [
-        { date: '2023-05-01', completed: 7 },
-        { date: '2023-05-02', completed: 8 },
-        { date: '2023-05-03', completed: 6.5 },
-        { date: '2023-05-04', completed: 7 },
-        { date: '2023-05-05', completed: 8 },
-        { date: '2023-05-06', completed: 7.5 },
-        { date: '2023-05-07', completed: 7.5 },
-      ],
-    },
-    {
-      id: '3',
-      name: 'Screen Time',
-      icon: '📱',
-      target: 2,
-      unit: 'hours',
-      color: 'pink',
-      progress: 3,
-      streakDays: 0,
-      history: [
-        { date: '2023-05-01', completed: 3 },
-        { date: '2023-05-02', completed: 2.5 },
-        { date: '2023-05-03', completed: 2 },
-        { date: '2023-05-04', completed: 3 },
-        { date: '2023-05-05', completed: 4 },
-        { date: '2023-05-06', completed: 3.5 },
-        { date: '2023-05-07', completed: 3 },
-      ],
-    },
-    {
-      id: '4',
-      name: 'Exercise',
-      icon: '🏃',
-      target: 30,
-      unit: 'minutes',
-      color: 'green',
-      progress: 15,
-      streakDays: 3,
-      history: [
-        { date: '2023-05-01', completed: 30 },
-        { date: '2023-05-02', completed: 45 },
-        { date: '2023-05-03', completed: 20 },
-        { date: '2023-05-04', completed: 30 },
-        { date: '2023-05-05', completed: 0 },
-        { date: '2023-05-06', completed: 15 },
-        { date: '2023-05-07', completed: 15 },
-      ],
-    },
-    {
-      id: '5',
-      name: 'Meditation',
-      icon: '🧘',
-      target: 10,
-      unit: 'minutes',
-      color: 'teal',
-      progress: 10,
-      streakDays: 7,
-      history: [
-        { date: '2023-05-01', completed: 10 },
-        { date: '2023-05-02', completed: 10 },
-        { date: '2023-05-03', completed: 15 },
-        { date: '2023-05-04', completed: 10 },
-        { date: '2023-05-05', completed: 10 },
-        { date: '2023-05-06', completed: 5 },
-        { date: '2023-05-07', completed: 10 },
-      ],
-    },
-    {
-      id: '6',
-      name: 'Read',
-      icon: '📚',
-      target: 20,
-      unit: 'pages',
-      color: 'orange',
-      progress: 10,
-      streakDays: 2,
-      history: [
-        { date: '2023-05-01', completed: 0 },
-        { date: '2023-05-02', completed: 15 },
-        { date: '2023-05-03', completed: 0 },
-        { date: '2023-05-04', completed: 10 },
-        { date: '2023-05-05', completed: 5 },
-        { date: '2023-05-06', completed: 20 },
-        { date: '2023-05-07', completed: 10 },
-      ],
-    }
-  ]);
-  
-  // State for new habit form
-  const [newHabit, setNewHabit] = useState<{
-    name: string;
-    icon: string;
-    target: number;
-    unit: string;
-    color: string;
-  }>({
-    name: '',
-    icon: '📝',
-    target: 1,
-    unit: 'times',
-    color: 'blue',
-  });
-  
-  // State for selected habit for detailed view
-  const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
-  
-  // Forms validation state
-  const [formErrors, setFormErrors] = useState<{
-    name?: string;
-    target?: string;
-    unit?: string;
-  }>({});
-  
-  // Check for notification permissions
-  useEffect(() => {
-    if ('Notification' in window) {
-      setNotificationsEnabled(Notification.permission === 'granted');
-    }
-  }, []);
-  
-  // Request notification permissions
-  const requestNotificationPermission = async () => {
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      setNotificationsEnabled(permission === 'granted');
-      
-      if (permission === 'granted') {
-        // Show a test notification
-        new Notification('HabitFlow Notifications Enabled', {
-          body: 'You will now receive reminders for your habits',
-          icon: '/favicon.ico',
-        });
-      }
-    }
-  };
-  
-  // Handle updating a habit's progress
-  const updateHabitProgress = (habitId: string, newProgress: number) => {
-    setHabits(prevHabits => 
-      prevHabits.map(habit => 
-        habit.id === habitId 
-          ? { 
-              ...habit, 
-              progress: newProgress,
-              streakDays: newProgress >= habit.target ? habit.streakDays + (habit.progress < habit.target ? 1 : 0) : 0,
-              history: [
-                ...habit.history,
-                { date: new Date().toISOString().split('T')[0], completed: newProgress }
-              ]
-            } 
-          : habit
-      )
+// Days data for charts
+const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+// Transform data for charts
+const sleepData = days.map((day, index) => ({
+  name: day,
+  hours: mockHabits.find(h => h.name === "Sleep")?.data[index] || 0
+}));
+
+const waterData = days.map((day, index) => ({
+  name: day,
+  glasses: mockHabits.find(h => h.name === "Drink Water")?.data[index] || 0
+}));
+
+const screenTimeData = days.map((day, index) => ({
+  name: day,
+  minutes: mockHabits.find(h => h.name === "Screen Time")?.data[index] || 0
+}));
+
+// Mock data for dashboard stats
+const weeklyStats = [
+  { name: "Sleep Average", value: "7.3 hrs", change: "+0.5", isPositive: true },
+  { name: "Water Intake", value: "7.1 glasses", change: "-0.2", isPositive: false },
+  { name: "Screen Time", value: "127 mins", change: "-15", isPositive: true },
+  { name: "Exercise", value: "25 mins", change: "+5", isPositive: true }
+];
+
+// Overall habit completion rate
+const completionData = [
+  { name: "Complete", value: 75 },
+  { name: "Incomplete", value: 25 }
+];
+
+const COLORS = ["#8B5CF6", "#E4E4E7"];
+
+// Progress calculation helper
+const calculateProgress = (current: number, goal: number) => {
+  return Math.min(Math.round((current / goal) * 100), 100);
+};
+
+// Mock data for motivation quotes
+const motivationalQuotes = [
+  "The only way to do great work is to love what you do.",
+  "It's not about being the best. It's about being better than you were yesterday.",
+  "Success is not final, failure is not fatal: It is the courage to continue that counts.",
+  "Your habits today determine your future tomorrow."
+];
+
+const getRandomQuote = () => {
+  return motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
+};
+
+// Custom Tooltip for charts
+const CustomTooltip = ({ active, payload, label, unit }: { active?: boolean, payload?: any[], label?: string, unit: string }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-2 rounded-lg shadow-lg border border-gray-200">
+        <p className="text-sm font-medium">{`${label}`}</p>
+        <p className="text-sm text-primary">{`${payload[0].value} ${unit}`}</p>
+      </div>
     );
-  };
+  }
+  return null;
+};
+
+// Execute habit data
+const executeHabit = (habit: typeof mockHabits[0], value: number) => {
+  // Update the current day's value
+  const today = new Date().getDay();
+  const adjustedIndex = today === 0 ? 6 : today - 1; // Convert to 0-6 where 0 is Monday
+  habit.data[adjustedIndex] = value;
   
-  // Handle creating a new habit
-  const handleCreateHabit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate form
-    const errors: {name?: string; target?: string; unit?: string} = {};
-    
-    if (!newHabit.name.trim()) {
-      errors.name = 'Habit name is required';
+  // Check goal completion for streak
+  if (habit.name === "Screen Time") {
+    // For screen time, less is better
+    if (value <= habit.goal) {
+      habit.streak += 1;
+    } else {
+      habit.streak = 0;
     }
-    
-    if (newHabit.target <= 0) {
-      errors.target = 'Target must be greater than 0';
+  } else {
+    // For other habits, more or equal is better
+    if (value >= habit.goal) {
+      habit.streak += 1;
+    } else {
+      habit.streak = 0;
     }
+  }
+  
+  return habit;
+};
+
+// Format date helper
+const formatDate = (date: Date) => {
+  const options: Intl.DateTimeFormatOptions = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  };
+  return date.toLocaleDateString('en-US', options);
+};
+
+const habitIcons: Record<string, React.ReactNode> = {
+  Droplets: <Droplets className="h-5 w-5" />,
+  Moon: <MoonIcon className="h-5 w-5" />,
+  Zap: <Zap className="h-5 w-5" />,
+  Book: <Info className="h-5 w-5" />,
+  Heart: <Heart className="h-5 w-5" />,
+  Smartphone: <Smartphone className="h-5 w-5" />,
+  Coffee: <Coffee className="h-5 w-5" />
+};
+
+// Component for Dashboard Top Stats
+const StatCard = ({ title, value, change, isPositive }: { title: string, value: string, change: string, isPositive: boolean }) => (
+  <Card>
+    <CardContent className="p-4">
+      <div className="flex justify-between items-start">
+        <div>
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <h4 className="text-2xl font-bold mt-1">{value}</h4>
+        </div>
+        <div className={`flex items-center ${isPositive ? 'text-green-500' : 'text-red-500'} text-sm font-medium`}>
+          {isPositive ? '+' : ''}{change}
+          <TrendingUp className={`h-4 w-4 ml-1 ${isPositive ? '' : 'transform rotate-180'}`} />
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const Index = () => {
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [darkMode, setDarkMode] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [habits, setHabits] = useState(mockHabits);
+  const [currentDate] = useState(new Date());
+  const [quote] = useState(getRandomQuote());
+  const [showAddHabitModal, setShowAddHabitModal] = useState(false);
+  const [newHabit, setNewHabit] = useState({ name: "", goal: 1, unit: "" });
+
+  const isMobile = useMobile();
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    document.documentElement.classList.toggle("dark", newMode);
+  };
+
+  // Check if habit was completed today
+  const wasHabitCompletedToday = (habit: typeof habits[0]) => {
+    const today = new Date().getDay();
+    const adjustedIndex = today === 0 ? 6 : today - 1; // Convert to 0-6 where 0 is Monday
+    const value = habit.data[adjustedIndex];
     
-    if (!newHabit.unit.trim()) {
-      errors.unit = 'Unit is required';
+    if (habit.name === "Screen Time") {
+      // For screen time, less is better
+      return value <= habit.goal;
+    } else {
+      // For other habits, more or equal is better
+      return value >= habit.goal;
     }
-    
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
+  };
+
+  // Update habit value
+  const updateHabitValue = (id: number, value: number) => {
+    setHabits(habits.map(h => {
+      if (h.id === id) {
+        return executeHabit({ ...h }, value);
+      }
+      return h;
+    }));
+
+    toast({
+      title: "Habit Updated",
+      description: "Your progress has been saved.",
+    });
+  };
+
+  // Add new habit
+  const addNewHabit = () => {
+    if (newHabit.name.trim() === "" || newHabit.unit.trim() === "") {
+      toast({
+        title: "Error",
+        description: "Please fill in all fields",
+        variant: "destructive",
+      });
       return;
     }
+
+    const id = habits.length + 1;
+    const colors = ["habit-blue", "habit-purple", "habit-green", "habit-orange", "habit-teal", "habit-red", "habit-yellow"];
+    const icons = ["Droplets", "Moon", "Zap", "Book", "Heart", "Smartphone", "Coffee"];
     
-    // Clear any previous errors
-    setFormErrors({});
-    
-    // Create new habit
-    const newHabitEntry: Habit = {
-      id: Date.now().toString(),
+    const newHabitItem = {
+      id,
       name: newHabit.name,
-      icon: newHabit.icon,
-      target: newHabit.target,
+      icon: icons[Math.floor(Math.random() * icons.length)],
+      goal: newHabit.goal,
       unit: newHabit.unit,
-      color: newHabit.color,
-      progress: 0,
-      streakDays: 0,
-      history: Array(7).fill(0).map((_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (6 - i));
-        return {
-          date: date.toISOString().split('T')[0],
-          completed: 0,
-        };
-      }),
+      color: colors[Math.floor(Math.random() * colors.length)],
+      data: [0, 0, 0, 0, 0, 0, 0],
+      streak: 0
     };
     
-    setHabits(prevHabits => [...prevHabits, newHabitEntry]);
+    setHabits([...habits, newHabitItem]);
+    setNewHabit({ name: "", goal: 1, unit: "" });
+    setShowAddHabitModal(false);
     
-    // Reset form and close modal
-    setNewHabit({
-      name: '',
-      icon: '📝',
-      target: 1,
-      unit: 'times',
-      color: 'blue',
+    toast({
+      title: "Success",
+      description: "New habit has been added",
     });
-    setNewHabitModalOpen(false);
-    
-    // Show success toast
-    showToast('Habit created successfully!');
   };
-  
-  // Handle deleting a habit
-  const handleDeleteHabit = (habitId: string) => {
-    setHabits(prevHabits => prevHabits.filter(habit => habit.id !== habitId));
+
+  // Calculate completion percentage
+  const calculateOverallCompletion = () => {
+    let completed = 0;
+    let total = 0;
     
-    if (selectedHabit?.id === habitId) {
-      setSelectedHabit(null);
-      setActiveView('dashboard');
+    habits.forEach(habit => {
+      if (wasHabitCompletedToday(habit)) {
+        completed++;
+      }
+      total++;
+    });
+    
+    return total > 0 ? Math.round((completed / total) * 100) : 0;
+  };
+
+  // Navigation
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Handle navigation
+  const handleNavigate = (tab: string) => {
+    setActiveTab(tab);
+    setSidebarOpen(false);
+    navigate(`#${tab}`);
+  };
+
+  // Check URL hash on initial load
+  useEffect(() => {
+    const hash = location.hash.replace("#", "");
+    if (hash) {
+      setActiveTab(hash);
     }
-    
-    // Show success toast
-    showToast('Habit deleted successfully!');
-  };
-  
-  // Handle viewing habit details
-  const viewHabitDetails = (habit: Habit) => {
-    setSelectedHabit(habit);
-    setActiveView('habitDetail');
-  };
-  
-  // Toast notification system
-  const [toast, setToast] = useState<{
-    message: string;
-    visible: boolean;
-  }>({
-    message: '',
-    visible: false,
-  });
-  
-  const showToast = (message: string) => {
-    setToast({
-      message,
-      visible: true,
-    });
-    
-    setTimeout(() => {
-      setToast(prev => ({
-        ...prev,
-        visible: false,
-      }));
-    }, 3000);
-  };
-  
-  // Calculate overall completion stats
-  const completionStats = habits.reduce(
-    (stats, habit) => {
-      stats.total += 1;
-      stats.completed += habit.progress >= habit.target ? 1 : 0;
-      stats.progress += (habit.progress / habit.target > 1 ? 1 : habit.progress / habit.target) / habits.length;
-      return stats;
-    },
-    { total: 0, completed: 0, progress: 0 }
-  );
-  
-  // Get color class based on habit color
-  const getColorClass = (color: string, type: 'bg' | 'text' | 'border' = 'bg') => {
-    const colorMap: {[key: string]: {bg: string, text: string, border: string}} = {
-      blue: {
-        bg: 'bg-habit-blue',
-        text: 'text-habit-blue',
-        border: 'border-habit-blue',
-      },
-      purple: {
-        bg: 'bg-habit-purple',
-        text: 'text-habit-purple',
-        border: 'border-habit-purple',
-      },
-      pink: {
-        bg: 'bg-habit-pink',
-        text: 'text-habit-pink',
-        border: 'border-habit-pink',
-      },
-      orange: {
-        bg: 'bg-habit-orange',
-        text: 'text-habit-orange',
-        border: 'border-habit-orange',
-      },
-      green: {
-        bg: 'bg-habit-green',
-        text: 'text-habit-green',
-        border: 'border-habit-green',
-      },
-      teal: {
-        bg: 'bg-habit-teal',
-        text: 'text-habit-teal',
-        border: 'border-habit-teal',
-      },
-      red: {
-        bg: 'bg-habit-red',
-        text: 'text-habit-red',
-        border: 'border-habit-red',
-      },
-      yellow: {
-        bg: 'bg-habit-yellow',
-        text: 'text-habit-yellow',
-        border: 'border-habit-yellow',
-      },
-    };
-    
-    return colorMap[color]?.[type] || colorMap.blue[type];
+  }, [location]);
+
+  const renderIconByName = (iconName: string) => {
+    return habitIcons[iconName] || <Info className="h-5 w-5" />;
   };
 
-  // Icons for different sections
-  const IconDashboard = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="7" height="9" x="3" y="3" rx="1" />
-      <rect width="7" height="5" x="14" y="3" rx="1" />
-      <rect width="7" height="9" x="14" y="12" rx="1" />
-      <rect width="7" height="5" x="3" y="16" rx="1" />
-    </svg>
-  );
-
-  const IconAnalytics = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 3v18h18" />
-      <path d="M18 17V9" />
-      <path d="M13 17V5" />
-      <path d="M8 17v-3" />
-    </svg>
-  );
-
-  const IconSettings = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-      <circle cx="12" cy="12" r="3" />
-    </svg>
-  );
-  
-  const IconPlus = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <line x1="5" y1="12" x2="19" y2="12" />
-    </svg>
-  );
-  
-  const IconClose = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  );
-
-  const IconChevronLeft = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M15 18l-6-6 6-6" />
-    </svg>
-  );
-
-  const IconChevronRight = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 18l6-6-6-6" />
-    </svg>
-  );
-
-  const IconMenu = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="4" y1="12" x2="20" y2="12" />
-      <line x1="4" y1="6" x2="20" y2="6" />
-      <line x1="4" y1="18" x2="20" y2="18" />
-    </svg>
-  );
-
-  const IconTrash = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 6h18" />
-      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-      <line x1="10" y1="11" x2="10" y2="17" />
-      <line x1="14" y1="11" x2="14" y2="17" />
-    </svg>
-  );
-  
-  const IconSave = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-      <polyline points="17 21 17 13 7 13 7 21" />
-      <polyline points="7 3 7 8 15 8" />
-    </svg>
-  );
-  
-  const IconCalendar = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-      <line x1="16" y1="2" x2="16" y2="6" />
-      <line x1="8" y1="2" x2="8" y2="6" />
-      <line x1="3" y1="10" x2="21" y2="10" />
-    </svg>
-  );
-
-  const IconFire = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-    </svg>
-  );
-
-  // Landing Page Component
-  const LandingPage = () => {
-    return (
-      <div className="flex flex-col min-h-screen">
-        {/* Hero Section */}
-        <section className="relative bg-gradient-to-b from-indigo-500 to-purple-700 text-white py-20 px-6 sm:px-12 md:py-28">
-          <div className="max-w-5xl mx-auto">
-            <div className="flex flex-col md:flex-row items-center justify-between">
-              <div className="md:w-1/2 mb-10 md:mb-0">
-                <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 animate-reveal" style={{ animationDelay: '0.1s' }}>
-                  Track Your Habits, Transform Your Life
-                </h1>
-                <p className="text-lg md:text-xl opacity-90 mb-6 animate-reveal" style={{ animationDelay: '0.3s' }}>
-                  Monitor your daily habits, set goals, and build better routines with powerful analytics and streak tracking.
-                </p>
-                <button
-                  onClick={() => setActiveView('dashboard')}
-                  className="bg-white text-purple-700 font-semibold px-6 py-3 rounded-lg shadow-lg hover:bg-opacity-90 transition-all duration-300 animate-reveal flex items-center"
-                  style={{ animationDelay: '0.5s' }}
-                >
-                  Get Started
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="ml-2">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                    <polyline points="12 5 19 12 12 19"></polyline>
-                  </svg>
-                </button>
-              </div>
-              
-              <div className="md:w-1/2 animate-reveal" style={{ animationDelay: '0.7s' }}>
-                <div className="bg-white/10 backdrop-blur-md p-6 rounded-2xl shadow-xl">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-xl font-semibold">Today's Progress</h3>
-                    <span className="text-sm bg-white/20 px-3 py-1 rounded-full">{currentDate}</span>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    {habits.slice(0, 3).map((habit) => (
-                      <div key={habit.id} className="bg-white/10 p-3 rounded-lg">
-                        <div className="flex justify-between items-center mb-2">
-                          <div className="flex items-center">
-                            <span className="text-xl mr-2">{habit.icon}</span>
-                            <span>{habit.name}</span>
-                          </div>
-                          <span>
-                            {habit.progress}/{habit.target} {habit.unit}
-                          </span>
-                        </div>
-                        <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-white" 
-                            style={{ width: `${Math.min(100, (habit.progress / habit.target) * 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent"></div>
-        </section>
-
-        {/* Features Section */}
-        <section className="py-16 px-6">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Powerful Features</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 3v18h18" />
-                    <path d="M18 17V9" />
-                    <path d="M13 17V5" />
-                    <path d="M8 17v-3" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Detailed Analytics</h3>
-                <p className="text-gray-600">Track your progress with beautiful charts and insightful metrics to stay motivated.</p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M6 15c3.5 6 10 6 13.5 0" />
-                    <path d="M20 10c-2-2-6-4.5-10-4.5S2 8 0 10" />
-                    <path d="M10 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Habit Streaks</h3>
-                <p className="text-gray-600">Build momentum with streak counters that help you form lasting habits.</p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-xl shadow-md hover:shadow-lg transition-shadow">
-                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Smart Reminders</h3>
-                <p className="text-gray-600">Get gentle notifications to keep you on track with your daily habits.</p>
-              </div>
-            </div>
-          </div>
-        </section>
-        
-        {/* Testimonials Section */}
-        <section className="py-16 px-6 bg-gray-50">
-          <div className="max-w-5xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">What Our Users Say</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-white p-6 rounded-xl shadow-md">
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center text-white font-bold">JD</div>
-                  <div className="ml-4">
-                    <h4 className="font-semibold">Jane Doe</h4>
-                    <div className="flex text-yellow-400">
-                      {[...Array(5)].map((_, i) => (
-                        <svg key={i} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                        </svg>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-gray-600">"This app helped me build a consistent meditation practice. The streak counter keeps me motivated, and I love seeing my progress visualized in the charts."</p>
-              </div>
-              
-              <div className="bg-white p-6 rounded-xl shadow-md">
-                <div className="flex items-center mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-teal-500 flex items-center justify-center text-white font-bold">MS</div>
-                  <div className="ml-4">
-                    <h4 className="font-semibold">Mike Smith</h4>
-                    <div className="flex text-yellow-400">
-                      {[...Array(5)].map((_, i) => (
-                        <svg key={i} xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-                        </svg>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <p className="text-gray-600">"I've tried many habit trackers, but this one stands out with its clean design and powerful analytics. It's helped me increase my water intake and reduce screen time."</p>
-              </div>
-            </div>
-          </div>
-        </section>
-        
-        {/* CTA Section */}
-        <section className="py-16 px-6 bg-gradient-to-r from-indigo-600 to-purple-700 text-white">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Build Better Habits?</h2>
-            <p className="text-xl opacity-90 mb-8">Start tracking your habits today and transform your daily routine.</p>
-            <button
-              onClick={() => setActiveView('dashboard')}
-              className="bg-white text-purple-700 font-semibold px-8 py-3 rounded-lg shadow-lg hover:bg-opacity-90 transition-all duration-300"
-            >
-              Get Started Now
-            </button>
-          </div>
-        </section>
-        
-        {/* Footer */}
-        <Footer />
-      </div>
-    );
-  };
-  
-  // Navbar Component
-  const Navbar = () => {
-    return (
-      <header className="bg-white shadow-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 flex items-center">
-                <div className="h-8 w-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-md flex items-center justify-center mr-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                  </svg>
-                </div>
-                <span className="font-semibold text-xl text-gray-800">HabitFlow</span>
-              </div>
-            </div>
-            
-            <div className="hidden md:flex items-center space-x-4">
-              <button
-                onClick={() => setActiveView('dashboard')}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                  activeView === 'dashboard' || activeView === 'habitDetail'
-                    ? 'text-indigo-600'
-                    : 'text-gray-600 hover:text-indigo-600'
-                }`}
-              >
-                Dashboard
-              </button>
-              <button
-                onClick={() => setActiveView('analytics')}
-                className={`px-3 py-2 rounded-md text-sm font-medium ${
-                  activeView === 'analytics'
-                    ? 'text-indigo-600'
-                    : 'text-gray-600 hover:text-indigo-600'
-                }`}
-              >
-                Analytics
-              </button>
-              <button
-                onClick={() => setSettingsOpen(true)}
-                className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-indigo-600"
-              >
-                Settings
-              </button>
-              <button
-                onClick={() => setActiveView('landing')}
-                className="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-indigo-600"
-              >
-                About
-              </button>
-              <button
-                onClick={() => setNewHabitModalOpen(true)}
-                className="ml-4 px-4 py-2 rounded-md text-sm font-medium bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-              >
-                <div className="flex items-center">
-                  <IconPlus />
-                  <span className="ml-1">New Habit</span>
-                </div>
-              </button>
-            </div>
-            
-            <div className="md:hidden flex items-center">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-indigo-600 focus:outline-none"
-              >
-                <IconMenu />
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Mobile menu */}
-        {mobileMenuOpen && (
-          <div className="md:hidden bg-white shadow-lg z-50 absolute w-full">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              <button
-                onClick={() => {
-                  setActiveView('dashboard');
-                  setMobileMenuOpen(false);
-                }}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
-                  activeView === 'dashboard' || activeView === 'habitDetail'
-                    ? 'text-indigo-600'
-                    : 'text-gray-600 hover:text-indigo-600'
-                }`}
-              >
-                Dashboard
-              </button>
-              <button
-                onClick={() => {
-                  setActiveView('analytics');
-                  setMobileMenuOpen(false);
-                }}
-                className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium ${
-                  activeView === 'analytics'
-                    ? 'text-indigo-600'
-                    : 'text-gray-600 hover:text-indigo-600'
-                }`}
-              >
-                Analytics
-              </button>
-              <button
-                onClick={() => {
-                  setSettingsOpen(true);
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-indigo-600"
-              >
-                Settings
-              </button>
-              <button
-                onClick={() => {
-                  setActiveView('landing');
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-indigo-600"
-              >
-                About
-              </button>
-              <button
-                onClick={() => {
-                  setNewHabitModalOpen(true);
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left px-3 py-2 rounded-md text-base font-medium bg-indigo-600 text-white hover:bg-indigo-700"
-              >
-                <div className="flex items-center">
-                  <IconPlus />
-                  <span className="ml-1">New Habit</span>
-                </div>
-              </button>
-            </div>
-          </div>
-        )}
-      </header>
-    );
-  };
-  
-  // Footer Component
-  const Footer = () => {
-    return (
-      <footer className="bg-gray-900 text-gray-300">
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <div className="flex items-center">
-                <div className="h-8 w-8 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-md flex items-center justify-center mr-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-                  </svg>
-                </div>
-                <span className="font-semibold text-xl text-white">HabitFlow</span>
-              </div>
-              <p className="mt-4 text-sm">
-                Building better habits one day at a time with powerful tracking and analytics.
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-semibold text-gray-200 uppercase tracking-wider">Quick Links</h3>
-              <ul className="mt-4 space-y-2">
-                <li>
-                  <button onClick={() => setActiveView('dashboard')} className="text-sm text-gray-300 hover:text-white">Dashboard</button>
-                </li>
-                <li>
-                  <button onClick={() => setActiveView('analytics')} className="text-sm text-gray-300 hover:text-white">Analytics</button>
-                </li>
-                <li>
-                  <button onClick={() => setSettingsOpen(true)} className="text-sm text-gray-300 hover:text-white">Settings</button>
-                </li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="text-sm font-semibold text-gray-200 uppercase tracking-wider">About</h3>
-              <ul className="mt-4 space-y-2">
-                <li>
-                  <button onClick={() => setActiveView('landing')} className="text-sm text-gray-300 hover:text-white">About Us</button>
-                </li>
-                <li>
-                  <button className="text-sm text-gray-300 hover:text-white">Privacy Policy</button>
-                </li>
-                <li>
-                  <button className="text-sm text-gray-300 hover:text-white">Terms of Service</button>
-                </li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="mt-8 border-t border-gray-800 pt-8 text-center">
-            <p className="text-sm">&copy; {new Date().getFullYear()} HabitFlow. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
-    );
-  };
-  
-  // Dashboard Component
-  const Dashboard = () => {
-    return (
-      <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">{currentDate}</h1>
-          <p className="text-gray-600">Track your daily habits and keep up with your goals.</p>
-        </div>
-        
-        {/* Stats cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '0.1s' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-gray-600">Daily Progress</h3>
-              <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex items-end gap-2">
-              <p className="text-3xl font-bold">{Math.round(completionStats.progress * 100)}%</p>
-              <p className="text-gray-500 mb-1">complete</p>
-            </div>
-            <div className="mt-4 h-2 bg-gray-100 rounded-full">
-              <div 
-                className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full"
-                style={{ width: `${completionStats.progress * 100}%` }}
-              ></div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '0.2s' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-gray-600">Habits Completed</h3>
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-            </div>
-            <div className="flex items-end gap-2">
-              <p className="text-3xl font-bold">{completionStats.completed}</p>
-              <p className="text-gray-500 mb-1">of {completionStats.total}</p>
-            </div>
-            <div className="mt-4 h-2 bg-gray-100 rounded-full">
-              <div 
-                className="h-full bg-gradient-to-r from-green-500 to-teal-500 rounded-full"
-                style={{ width: `${(completionStats.completed / completionStats.total) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-md p-6 animate-scale-in" style={{ animationDelay: '0.3s' }}>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-medium text-gray-600">Longest Streak</h3>
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                <IconFire className="h-6 w-6 text-orange-600" />
-              </div>
-            </div>
-            <div className="flex items-end gap-2">
-              <p className="text-3xl font-bold">{Math.max(...habits.map(h => h.streakDays))}</p>
-              <p className="text-gray-500 mb-1">days</p>
-            </div>
-            <div className="mt-4 text-sm text-gray-500">
-              Keep it up! You're building momentum.
-            </div>
-          </div>
-        </div>
-        
-        {/* Habits list */}
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Your Habits</h2>
-            <button
-              onClick={() => setNewHabitModalOpen(true)}
-              className="flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-800"
-            >
-              <IconPlus />
-              <span className="ml-1">New Habit</span>
-            </button>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {habits.map((habit, index) => (
-              <div 
-                key={habit.id} 
-                className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow animate-scale-in p-5"
-                style={{ animationDelay: `${0.1 + index * 0.1}s` }}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center">
-                    <div className={`w-10 h-10 ${getColorClass(habit.color, 'bg')} rounded-full flex items-center justify-center text-white shadow-sm`}>
-                      <span className="text-lg">{habit.icon}</span>
-                    </div>
-                    <div className="ml-3">
-                      <h3 className="font-semibold text-lg">{habit.name}</h3>
-                      <p className="text-sm text-gray-500">
-                        Target: {habit.target} {habit.unit}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <button
-                    onClick={() => viewHabitDetails(habit)}
-                    className="text-gray-400 hover:text-indigo-600"
-                    aria-label="View details"
-                  >
-                    <IconChevronRight />
-                  </button>
-                </div>
-                
-                <div className="mb-4">
-                  <div className="flex justify-between items-center text-sm mb-1">
-                    <span className="text-gray-600">Progress</span>
-                    <span className={`font-medium ${habit.progress >= habit.target ? 'text-green-600' : 'text-gray-700'}`}>
-                      {habit.progress} / {habit.target}
-                    </span>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full">
-                    <div 
-                      className={`h-full ${getColorClass(habit.color, 'bg')} rounded-full transition-all duration-500`}
-                      style={{ width: `${Math.min(100, (habit.progress / habit.target) * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center">
-                    <IconFire className={`h-5 w-5 ${habit.streakDays > 0 ? 'text-orange-500' : 'text-gray-400'}`} />
-                    <span className={`ml-1 text-sm font-medium ${habit.streakDays > 0 ? 'text-orange-500' : 'text-gray-400'}`}>
-                      {habit.streakDays} day{habit.streakDays !== 1 ? 's' : ''} streak
-                    </span>
-                  </div>
-                  
-                  <div className="flex">
-                    <button
-                      onClick={() => updateHabitProgress(habit.id, Math.max(0, habit.progress - (habit.unit === 'minutes' ? 5 : 1)))}
-                      className="p-1 text-gray-400 hover:text-gray-700"
-                      disabled={habit.progress <= 0}
-                      aria-label="Decrease"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M8 12h8" />
-                      </svg>
-                    </button>
-                    
-                    <button
-                      onClick={() => updateHabitProgress(habit.id, habit.progress + (habit.unit === 'minutes' ? 5 : 1))}
-                      className="p-1 ml-2 text-gray-400 hover:text-gray-700"
-                      aria-label="Increase"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 8v8" />
-                        <path d="M8 12h8" />
-                      </svg>
-                    </button>
-                    
-                    <input
-                      type="range"
-                      min="0"
-                      max={habit.target * 2}
-                      step={habit.unit === 'minutes' ? 5 : 1}
-                      value={habit.progress}
-                      onChange={(e) => updateHabitProgress(habit.id, Number(e.target.value))}
-                      className="custom-slider ml-2 w-24"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
-  // Habit Detail Component
-  const HabitDetail = () => {
-    if (!selectedHabit) return null;
-    
-    // Reformat history data for charts
-    const weeklyData = selectedHabit.history.map((entry) => ({
-      date: new Date(entry.date).toLocaleDateString('en-US', { weekday: 'short' }),
-      value: entry.completed,
-    }));
-    
-    // Calculate weekly average
-    const weeklyAverage = weeklyData.reduce((acc, entry) => acc + entry.value, 0) / weeklyData.length;
-    
-    // Format streak message
-    const streakMessage = selectedHabit.streakDays > 0
-      ? `${selectedHabit.streakDays} day streak! Keep it up!`
-      : 'Start your streak today!';
-    
-    return (
-      <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
-        <button
-          onClick={() => setActiveView('dashboard')}
-          className="flex items-center text-gray-600 hover:text-indigo-600 mb-6"
-        >
-          <IconChevronLeft />
-          <span className="ml-1">Back to Dashboard</span>
-        </button>
-        
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-8 gap-4">
+  return (
+    <div className={`min-h-screen ${darkMode ? "dark" : ""}`}>
+      <div className="flex flex-col min-h-screen bg-background">
+        {/* Header */}
+        <header className="sticky top-0 z-30 flex items-center justify-between px-4 md:px-6 h-16 border-b bg-background">
           <div className="flex items-center">
-            <div className={`w-16 h-16 ${getColorClass(selectedHabit.color, 'bg')} rounded-full flex items-center justify-center text-white shadow-sm`}>
-              <span className="text-2xl">{selectedHabit.icon}</span>
-            </div>
-            <div className="ml-4">
-              <h1 className="text-3xl font-bold text-gray-900">{selectedHabit.name}</h1>
-              <p className="text-gray-600">
-                Target: {selectedHabit.target} {selectedHabit.unit} daily
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex space-x-3">
             <button
-              onClick={() => handleDeleteHabit(selectedHabit.id)}
-              className="px-4 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50 flex items-center"
+              className="mr-2 p-2 rounded-md hover:bg-accent md:hidden"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
             >
-              <IconTrash />
-              <span className="ml-2">Delete</span>
+              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
+            <h1 className="text-xl font-bold flex items-center">
+              <Zap className="h-5 w-5 text-primary mr-2" />
+              HabitTracker
+            </h1>
           </div>
-        </div>
-        
-        {/* Progress card */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Today's Progress</h2>
-          
-          <div className="flex flex-col md:flex-row justify-between gap-6">
-            <div className="flex-1">
-              <div className="flex justify-between items-center text-sm mb-2">
-                <span className="text-gray-600">Progress</span>
-                <span className={`font-medium ${selectedHabit.progress >= selectedHabit.target ? 'text-green-600' : 'text-gray-700'}`}>
-                  {selectedHabit.progress} / {selectedHabit.target} {selectedHabit.unit}
-                </span>
-              </div>
-              
-              <div className="h-3 bg-gray-100 rounded-full mb-4">
-                <div 
-                  className={`h-full ${getColorClass(selectedHabit.color, 'bg')} rounded-full transition-all duration-500`}
-                  style={{ width: `${Math.min(100, (selectedHabit.progress / selectedHabit.target) * 100)}%` }}
-                ></div>
-              </div>
-              
-              <div className="flex items-center">
-                <input
-                  type="range"
-                  min="0"
-                  max={selectedHabit.target * 2}
-                  step={selectedHabit.unit === 'minutes' ? 5 : 1}
-                  value={selectedHabit.progress}
-                  onChange={(e) => updateHabitProgress(selectedHabit.id, Number(e.target.value))}
-                  className="custom-slider flex-1 mr-4"
-                />
-                
-                <div className="flex">
-                  <button
-                    onClick={() => updateHabitProgress(selectedHabit.id, Math.max(0, selectedHabit.progress - (selectedHabit.unit === 'minutes' ? 5 : 1)))}
-                    className="p-2 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100"
-                    disabled={selectedHabit.progress <= 0}
-                    aria-label="Decrease"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M8 12h8" />
-                    </svg>
-                  </button>
-                  
-                  <button
-                    onClick={() => updateHabitProgress(selectedHabit.id, selectedHabit.progress + (selectedHabit.unit === 'minutes' ? 5 : 1))}
-                    className="p-2 rounded-full ml-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100"
-                    aria-label="Increase"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 8v8" />
-                      <path d="M8 12h8" />
-                    </svg>
-                  </button>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-full"
+              onClick={toggleDarkMode}
+            >
+              {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full relative">
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                    2
+                  </span>
+                  <span className="sr-only">Notifications</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <div className="p-4 pt-2 pb-3 border-b">
+                  <h3 className="font-semibold text-lg">Notifications</h3>
+                  <p className="text-sm text-muted-foreground">You have 2 unread messages</p>
                 </div>
-              </div>
-            </div>
-            
-            <div className="md:w-40 flex flex-row md:flex-col items-center justify-between md:justify-center gap-2">
-              <div className={`relative w-16 h-16 md:w-24 md:h-24 rounded-full ${getColorClass(selectedHabit.color, 'border')} border-4 flex items-center justify-center animate-scale-in`}>
-                {selectedHabit.streakDays > 0 && (
-                  <div className={`absolute w-full h-full rounded-full ${getColorClass(selectedHabit.color, 'border')} border-4 animate-ping-slow`}></div>
-                )}
-                <div className="text-center">
-                  <span className="block text-xl md:text-3xl font-bold">{selectedHabit.streakDays}</span>
-                  <span className="text-xs md:text-sm text-gray-600">days</span>
-                </div>
-              </div>
-              <p className="text-sm md:text-center text-gray-600">
-                {streakMessage}
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        {/* Weekly progress chart */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Weekly Progress</h2>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weeklyData} margin={{ top: 5, right: 20, bottom: 20, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar 
-                    dataKey="value" 
-                    name={selectedHabit.unit}
-                    fill={`hsl(var(--primary))`} 
-                    radius={[4, 4, 0, 0]}
-                  />
-                  {/* Target reference line */}
-                  <ReferenceLine y={selectedHabit.target} stroke="#FF8C00" strokeDasharray="3 3" label={{
-                    position: 'right',
-                    value: 'Target',
-                    fill: '#FF8C00',
-                    fontSize: 12
-                  }} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Stats & Insights</h2>
-            
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Weekly Average:</span>
-                <span className="font-medium">
-                  {weeklyAverage.toFixed(1)} {selectedHabit.unit}/day
-                </span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">Completion Rate:</span>
-                <span className="font-medium">
-                  {((selectedHabit.history.filter(entry => entry.completed >= selectedHabit.target).length / selectedHabit.history.length) * 100).toFixed(0)}%
-                </span>
-              </div>
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">Best Day:</span>
-                <span className="font-medium">
-                  {weeklyData[selectedHabit.history.findIndex(entry => entry.completed === Math.max(...selectedHabit.history.map(e => e.completed)))].date} 
-                  ({Math.max(...selectedHabit.history.map(e => e.completed))} {selectedHabit.unit})
-                </span>
-              </div>
-              
-              <div className="pt-4 mt-4 border-t">
-                <h3 className="font-medium mb-2">Insight</h3>
-                <p className="text-gray-600 text-sm">
-                  {weeklyAverage >= selectedHabit.target 
-                    ? `Great job! You're consistently meeting or exceeding your target of ${selectedHabit.target} ${selectedHabit.unit} per day.` 
-                    : `You're averaging ${weeklyAverage.toFixed(1)} ${selectedHabit.unit}/day, which is ${((weeklyAverage / selectedHabit.target) * 100).toFixed(0)}% of your target. Keep working toward your goal!`
-                  }
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Additional stats */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-6">Detailed Tracking</h2>
-          
-          <div className="h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={weeklyData} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="value" 
-                  name={`${selectedHabit.name} (${selectedHabit.unit})`} 
-                  stroke={`hsl(var(--primary))`} 
-                  strokeWidth={3}
-                  activeDot={{ r: 8 }}
-                />
-                {/* Target reference line */}
-                <ReferenceLine y={selectedHabit.target} stroke="#FF8C00" strokeDasharray="3 3" label={{
-                  position: 'right',
-                  value: 'Target',
-                  fill: '#FF8C00',
-                  fontSize: 12
-                }} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-    );
-  };
-  
-  // Analytics Component
-  const Analytics = () => {
-    // Generate data for charts
-    const weeklyCompletionData = Array(7).fill(0).map((_, index) => {
-      const date = new Date();
-      date.setDate(date.getDate() - (6 - index));
-      const dateString = date.toISOString().split('T')[0];
-      
-      const dayCompletion = habits.reduce((acc, habit) => {
-        const dayEntry = habit.history.find(h => h.date === dateString);
-        if (dayEntry) {
-          acc.total += 1;
-          acc.completed += dayEntry.completed >= habit.target ? 1 : 0;
-        }
-        return acc;
-      }, { total: 0, completed: 0 });
-      
-      return {
-        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
-        completed: dayCompletion.completed,
-        total: dayCompletion.total,
-        rate: dayCompletion.total > 0 ? (dayCompletion.completed / dayCompletion.total) * 100 : 0,
-      };
-    });
-    
-    // Calculate habit success rates for pie chart
-    const habitSuccessRates = habits.map(habit => {
-      const completedDays = habit.history.filter(entry => entry.completed >= habit.target).length;
-      const totalDays = habit.history.length;
-      return {
-        name: habit.name,
-        value: totalDays > 0 ? (completedDays / totalDays) * 100 : 0,
-        color: getColorClass(habit.color, 'bg'),
-      };
-    });
-    
-    return (
-      <div className="px-4 sm:px-6 lg:px-8 py-8 max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Analytics</h1>
-          <p className="text-gray-600">Track your progress and get insights into your habits.</p>
-        </div>
-        
-        {/* Summary stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-gray-600 mb-2">Total Habits</h3>
-            <div className="text-3xl font-bold">{habits.length}</div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-gray-600 mb-2">Weekly Completion</h3>
-            <div className="text-3xl font-bold">
-              {((weeklyCompletionData.reduce((acc, day) => acc + day.rate, 0) / 7)).toFixed(0)}%
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-gray-600 mb-2">Best Streak</h3>
-            <div className="text-3xl font-bold">
-              {Math.max(...habits.map(h => h.streakDays))} days
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h3 className="text-gray-600 mb-2">Top Habit</h3>
-            <div className="text-xl font-bold truncate">
-              {
-                habits.sort((a, b) => 
-                  (b.history.filter(h => h.completed >= b.target).length / b.history.length) -
-                  (a.history.filter(h => h.completed >= a.target).length / a.history.length)
-                )[0]?.name || 'None'
-              }
-            </div>
-          </div>
-        </div>
-        
-        {/* Weekly overview chart */}
-        <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-          <h2 className="text-xl font-semibold mb-4">Weekly Overview</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyCompletionData} margin={{ top: 5, right: 30, left: 20, bottom: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="day" />
-                <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
-                <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" domain={[0, 100]} />
-                <Tooltip />
-                <Legend />
-                <Bar yAxisId="left" dataKey="completed" name="Habits Completed" fill="#8884d8" radius={[4, 4, 0, 0]} />
-                <Line yAxisId="right" type="monotone" dataKey="rate" name="Completion Rate %" stroke="#82ca9d" strokeWidth={3} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        
-        {/* Habits comparison */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Habit Success Rate</h2>
-            <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={habitSuccessRates}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  >
-                    {habitSuccessRates.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color.replace('bg-', '')} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    formatter={(value) => [`${value.toFixed(0)}%`, 'Success Rate']}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-semibold mb-4">Habit Comparison</h2>
-            <div className="space-y-4">
-              {habits.map(habit => {
-                const completionRate = habit.history.filter(entry => entry.completed >= habit.target).length / habit.history.length * 100;
-                
-                return (
-                  <div key={habit.id} className="space-y-1">
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <span className="text-xl mr-2">{habit.icon}</span>
-                        <span>{habit.name}</span>
+                <div className="max-h-96 overflow-y-auto">
+                  <DropdownMenuItem className="p-0">
+                    <div className="flex items-start gap-3 p-3 cursor-pointer hover:bg-accent w-full">
+                      <div className="bg-primary/20 p-2 rounded-full">
+                        <AlertCircle className="h-4 w-4 text-primary" />
                       </div>
-                      <span className="text-sm font-medium">{completionRate.toFixed(0)}%</span>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">Streak Alert!</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          You're on a 7-day streak for Sleep habit. Keep it up!
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">2 hours ago</p>
+                      </div>
+                      <div className="h-2 w-2 bg-primary rounded-full"></div>
                     </div>
-                    <div className="h-2 bg-gray-100 rounded-full">
-                      <div 
-                        className={`h-full ${getColorClass(habit.color, 'bg')} rounded-full`} 
-                        style={{ width: `${completionRate}%` }}
-                      ></div>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="p-0">
+                    <div className="flex items-start gap-3 p-3 cursor-pointer hover:bg-accent w-full">
+                      <div className="bg-primary/20 p-2 rounded-full">
+                        <Award className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">Achievement Unlocked!</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          You've completed all habits for today. Great job!
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">5 hours ago</p>
+                      </div>
+                      <div className="h-2 w-2 bg-primary rounded-full"></div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  </DropdownMenuItem>
+                </div>
+                <div className="p-2 border-t">
+                  <Button variant="ghost" className="w-full justify-center text-sm">
+                    View all notifications
+                  </Button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <User className="h-5 w-5" />
+                  <span className="sr-only">User menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem>Logout</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </div>
-        
-        {/* Insights */}
-        <div className="bg-white rounded-xl shadow-md p-6">
-          <h2 className="text-xl font-semibold mb-4">Insights & Recommendations</h2>
-          <div className="space-y-4">
-            <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
-              <h3 className="font-semibold text-blue-800 mb-2">Weekly Trends</h3>
-              <p className="text-blue-700">
-                {weeklyCompletionData[6].rate > weeklyCompletionData[0].rate
-                  ? 'Your completion rate is improving this week. Keep up the momentum!'
-                  : weeklyCompletionData[6].rate < weeklyCompletionData[0].rate
-                    ? 'Your completion rate has decreased this week. Try setting reminders to get back on track.'
-                    : 'Your completion rate has been consistent this week.'
-                }
-              </p>
-            </div>
-            
-            <div className="p-4 bg-green-50 border border-green-100 rounded-lg">
-              <h3 className="font-semibold text-green-800 mb-2">Top Performing Habit</h3>
-              <p className="text-green-700">
-                {habitSuccessRates.sort((a, b) => b.value - a.value)[0]?.value > 0
-                  ? `"${habitSuccessRates.sort((a, b) => b.value - a.value)[0]?.name}" is your most consistent habit with a ${habitSuccessRates.sort((a, b) => b.value - a.value)[0]?.value.toFixed(0)}% success rate.`
-                  : 'Start building consistency with your habits to see which ones you excel at.'
-                }
-              </p>
-            </div>
-            
-            <div className="p-4 bg-amber-50 border border-amber-100 rounded-lg">
-              <h3 className="font-semibold text-amber-800 mb-2">Needs Improvement</h3>
-              <p className="text-amber-700">
-                {habitSuccessRates.sort((a, b) => a.value - b.value)[0]?.value < 50
-                  ? `"${habitSuccessRates.sort((a, b) => a.value - b.value)[0]?.name}" needs attention with only a ${habitSuccessRates.sort((a, b) => a.value - b.value)[0]?.value.toFixed(0)}% success rate.`
-                  : 'All your habits are performing well with at least 50% success rates!'
-                }
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+        </header>
 
-  // Settings Modal Component
-  const SettingsModal = () => {
-    if (!settingsOpen) return null;
-    
-    return (
-      <div className="fixed inset-0 z-50 overflow-y-auto">
-        <div className="flex items-center justify-center min-h-screen p-4">
-          <div className="fixed inset-0 bg-black bg-opacity-25 transition-opacity" onClick={() => setSettingsOpen(false)}></div>
-          
-          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6 animate-scale-in">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900">Settings</h2>
-              <button
-                onClick={() => setSettingsOpen(false)}
-                className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                aria-label="Close"
-              >
-                <IconClose />
-              </button>
-            </div>
-            
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Notifications</h3>
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium">Habit Reminders</p>
-                    <p className="text-sm text-gray-600">Get notified about your habits</p>
+        <div className="flex flex-1">
+          {/* Sidebar for navigation */}
+          <motion.aside 
+            className={`fixed inset-y-0 left-0 z-20 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform lg:translate-x-0 lg:static lg:w-64 ${
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+            initial={false}
+            animate={{ x: sidebarOpen ? 0 : isMobile ? -320 : 0 }}
+          >
+            <div className="flex flex-col h-full pt-16">
+              <div className="p-4">
+                <div className="flex items-center mb-6 px-2 pt-4">
+                  <div className="flex h-10 w-10 rounded-full bg-primary/10 items-center justify-center mr-3">
+                    <User className="h-5 w-5 text-primary" />
                   </div>
-                  <button
-                    onClick={requestNotificationPermission}
-                    className={`w-10 h-5 rounded-full focus:outline-none ${
-                      notificationsEnabled ? 'bg-indigo-600' : 'bg-gray-300'
-                    } relative`}
-                    aria-pressed={notificationsEnabled}
+                  <div>
+                    <p className="font-medium text-sidebar-foreground">Jane Smith</p>
+                    <p className="text-xs text-sidebar-foreground/70">jane@example.com</p>
+                  </div>
+                </div>
+                
+                <nav>
+                  <Button
+                    variant={activeTab === "dashboard" ? "secondary" : "ghost"}
+                    className="w-full justify-start mb-1"
+                    onClick={() => handleNavigate("dashboard")}
                   >
-                    <span className="sr-only">Enable notifications</span>
-                    <div
-                      className={`absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform transform ${
-                        notificationsEnabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
-                    ></div>
-                  </button>
-                </div>
+                    <Home className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </Button>
+                  
+                  <Button
+                    variant={activeTab === "habits" ? "secondary" : "ghost"}
+                    className="w-full justify-start mb-1"
+                    onClick={() => handleNavigate("habits")}
+                  >
+                    <CheckCheck className="h-4 w-4 mr-2" />
+                    My Habits
+                  </Button>
+                  
+                  <Button
+                    variant={activeTab === "analytics" ? "secondary" : "ghost"}
+                    className="w-full justify-start mb-1"
+                    onClick={() => handleNavigate("analytics")}
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Analytics
+                  </Button>
+                  
+                  <Button
+                    variant={activeTab === "calendar" ? "secondary" : "ghost"}
+                    className="w-full justify-start mb-1"
+                    onClick={() => handleNavigate("calendar")}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Calendar
+                  </Button>
+                  
+                  <Button
+                    variant={activeTab === "settings" ? "secondary" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => handleNavigate("settings")}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Button>
+                </nav>
               </div>
               
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Theme</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <button className="border-2 border-indigo-600 p-3 rounded-lg flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-full bg-white border"></div>
-                    <span className="ml-2">Light</span>
-                  </button>
-                  <button className="border border-gray-300 p-3 rounded-lg flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-full bg-gray-900 border"></div>
-                    <span className="ml-2">Dark</span>
-                  </button>
-                </div>
-              </div>
-              
-              <div className="pt-4 border-t border-gray-300">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Account</h3>
-                <button className="w-full py-2 px-4 rounded-lg border border-gray-300 text-center hover:bg-gray-50">
-                  Sign Out
-                </button>
+              <div className="mt-auto p-4">
+                <Card className="bg-sidebar-accent">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="font-medium text-sm">Habit Reminders</p>
+                      <Switch checked />
+                    </div>
+                    <p className="text-xs text-sidebar-foreground/70">
+                      Daily reminders are enabled. You'll receive notifications when it's time to complete your habits.
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
             </div>
-          </div>
+          </motion.aside>
+
+          {/* Main content area */}
+          <main className="flex-1 overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto"
+              >
+                {/* Dashboard */}
+                {activeTab === "dashboard" && (
+                  <div className="space-y-6">
+                    {/* Header with date and overall completion */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <h1 className="text-2xl font-bold">Daily Progress</h1>
+                        <p className="text-muted-foreground">{formatDate(currentDate)}</p>
+                      </div>
+                      <Card className="w-full md:w-auto">
+                        <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-4">
+                          <div className="relative h-16 w-16">
+                            <PieChart width={64} height={64}>
+                              <Pie
+                                data={completionData}
+                                innerRadius={25}
+                                outerRadius={30}
+                                paddingAngle={2}
+                                dataKey="value"
+                                stroke="none"
+                              >
+                                {completionData.map((entry, index) => (
+                                  <Cell
+                                    key={`cell-${index}`}
+                                    fill={COLORS[index % COLORS.length]}
+                                  />
+                                ))}
+                              </Pie>
+                            </PieChart>
+                            <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
+                              <p className="text-sm font-bold">{calculateOverallCompletion()}%</p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Today's Progress</p>
+                            <p className="text-xs text-muted-foreground">
+                              {habits.filter(h => wasHabitCompletedToday(h)).length} of {habits.length} habits completed
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Stats Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {weeklyStats.map((stat, index) => (
+                        <StatCard key={index} {...stat} />
+                      ))}
+                    </div>
+
+                    {/* Quote of the day */}
+                    <Card className="bg-gradient-to-r from-primary/20 to-primary/5">
+                      <CardContent className="p-6">
+                        <p className="text-lg font-medium italic">{quote}</p>
+                      </CardContent>
+                    </Card>
+
+                    {/* Main Content Tabs */}
+                    <Tabs defaultValue="today" className="w-full">
+                      <TabsList className="w-full sm:w-auto grid grid-cols-3">
+                        <TabsTrigger value="today">Today's Habits</TabsTrigger>
+                        <TabsTrigger value="charts">Insights</TabsTrigger>
+                        <TabsTrigger value="streaks">Streaks</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="today" className="space-y-4 mt-4">
+                        {/* Today's habits */}
+                        {habits.map((habit) => {
+                          const today = new Date().getDay();
+                          const adjustedIndex = today === 0 ? 6 : today - 1;
+                          const currentValue = habit.data[adjustedIndex];
+                          const progress = calculateProgress(currentValue, habit.goal);
+                          
+                          return (
+                            <Card key={habit.id} className="overflow-hidden">
+                              <CardContent className="p-0">
+                                <div className="p-6">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center">
+                                      <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white bg-${habit.color}`}>
+                                        {renderIconByName(habit.icon)}
+                                      </div>
+                                      <div className="ml-4">
+                                        <h3 className="font-medium">{habit.name}</h3>
+                                        <p className="text-sm text-muted-foreground">
+                                          Goal: {habit.goal} {habit.unit}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <Badge 
+                                      variant={wasHabitCompletedToday(habit) ? "default" : "outline"}
+                                      className={wasHabitCompletedToday(habit) ? "bg-green-500/20 text-green-600 hover:bg-green-500/20" : ""}
+                                    >
+                                      {wasHabitCompletedToday(habit) ? 
+                                        <><Check className="h-3 w-3 mr-1" /> Complete</> : 
+                                        'Pending'}
+                                    </Badge>
+                                  </div>
+                                  
+                                  <div className="mt-4 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-sm">{currentValue} {habit.unit}</span>
+                                      <span className="text-sm">{habit.goal} {habit.unit}</span>
+                                    </div>
+                                    <Progress value={progress} className="h-2" />
+                                    
+                                    <div>
+                                      <p className="text-xs text-muted-foreground mb-2">
+                                        Adjust today's value:
+                                      </p>
+                                      <div className="flex items-center">
+                                        <Slider
+                                          className="flex-1 custom-slider"
+                                          defaultValue={[currentValue]}
+                                          max={habit.name === "Screen Time" ? habit.goal * 2 : habit.goal * 1.5}
+                                          step={habit.unit === "hours" ? 0.5 : 1}
+                                          onValueChange={(value) => {
+                                            updateHabitValue(habit.id, value[0]);
+                                          }}
+                                        />
+                                        <span className="ml-4 w-12 text-center">
+                                          {currentValue}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                        
+                        <Button 
+                          className="w-full mt-4" 
+                          variant="outline"
+                          onClick={() => setShowAddHabitModal(true)}
+                        >
+                          + Add New Habit
+                        </Button>
+                      </TabsContent>
+                      
+                      <TabsContent value="charts" className="space-y-6 mt-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                          {/* Sleep Chart */}
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-lg">Sleep Pattern</CardTitle>
+                              <CardDescription>Last 7 days sleeping hours</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="h-[250px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <AreaChart data={sleepData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                    <defs>
+                                      <linearGradient id="sleepColor" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8} />
+                                        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
+                                      </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="name" />
+                                    <YAxis />
+                                    <Tooltip content={<CustomTooltip unit="hours" />} />
+                                    <Area 
+                                      type="monotone" 
+                                      dataKey="hours" 
+                                      stroke="#8B5CF6" 
+                                      fillOpacity={1} 
+                                      fill="url(#sleepColor)" 
+                                    />
+                                  </AreaChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </CardContent>
+                          </Card>
+                          
+                          {/* Water Intake Chart */}
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-lg">Water Intake</CardTitle>
+                              <CardDescription>Last 7 days consumption</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="h-[250px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart data={waterData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="name" />
+                                    <YAxis />
+                                    <Tooltip content={<CustomTooltip unit="glasses" />} />
+                                    <Bar 
+                                      dataKey="glasses" 
+                                      fill="#0EA5E9" 
+                                      radius={[4, 4, 0, 0]} 
+                                    />
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </CardContent>
+                          </Card>
+                          
+                          {/* Screen Time Chart */}
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-lg">Screen Time</CardTitle>
+                              <CardDescription>Last 7 days usage</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="h-[250px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <LineChart data={screenTimeData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="name" />
+                                    <YAxis />
+                                    <Tooltip content={<CustomTooltip unit="minutes" />} />
+                                    <Line 
+                                      type="monotone" 
+                                      dataKey="minutes" 
+                                      stroke="#EF4444" 
+                                      strokeWidth={2}
+                                      dot={{ r: 4 }}
+                                      activeDot={{ r: 6, stroke: "#EF4444", strokeWidth: 2, fill: "#FFFFFF" }}
+                                    />
+                                  </LineChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </CardContent>
+                          </Card>
+                          
+                          {/* Overall Completion Chart */}
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className="text-lg">Weekly Completion</CardTitle>
+                              <CardDescription>Habit completion by day</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="h-[250px]">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart
+                                    data={days.map((day, i) => ({
+                                      name: day,
+                                      complete: habits.filter(h => {
+                                        const val = h.data[i];
+                                        return h.name === "Screen Time" ? val <= h.goal : val >= h.goal;
+                                      }).length,
+                                      incomplete: habits.filter(h => {
+                                        const val = h.data[i];
+                                        return h.name === "Screen Time" ? val > h.goal : val < h.goal;
+                                      }).length
+                                    }))}
+                                    margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
+                                  >
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                    <XAxis dataKey="name" />
+                                    <YAxis />
+                                    <Tooltip />
+                                    <Legend />
+                                    <Bar dataKey="complete" stackId="a" fill="#22C55E" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="incomplete" stackId="a" fill="#F87171" radius={[4, 4, 0, 0]} />
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      </TabsContent>
+                      
+                      <TabsContent value="streaks" className="mt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {habits.map((habit) => (
+                            <Card key={habit.id} className={habit.streak > 0 ? "border-l-4 border-l-primary" : ""}>
+                              <CardContent className="p-4">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center">
+                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white bg-${habit.color}`}>
+                                      {renderIconByName(habit.icon)}
+                                    </div>
+                                    <div className="ml-3">
+                                      <h3 className="font-medium text-sm">{habit.name}</h3>
+                                      <p className="text-xs text-muted-foreground">
+                                        Goal: {habit.goal} {habit.unit}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-2xl font-bold">{habit.streak}</div>
+                                    <p className="text-xs text-muted-foreground">day streak</p>
+                                  </div>
+                                </div>
+                                
+                                <div className="mt-4">
+                                  <div className="flex justify-between mb-1">
+                                    <span className="text-xs text-muted-foreground">This Week:</span>
+                                  </div>
+                                  <div className="flex gap-1">
+                                    {habit.data.map((value, index) => {
+                                      const isCompleted = habit.name === "Screen Time" 
+                                        ? value <= habit.goal 
+                                        : value >= habit.goal;
+                                      
+                                      return (
+                                        <div 
+                                          key={index} 
+                                          className={`h-2 flex-1 rounded-full ${
+                                            isCompleted ? "bg-green-500" : "bg-gray-200 dark:bg-gray-700"
+                                          }`}
+                                        />
+                                      );
+                                    })}
+                                  </div>
+                                  <div className="flex justify-between mt-1">
+                                    <span className="text-xs text-muted-foreground">Mon</span>
+                                    <span className="text-xs text-muted-foreground">Sun</span>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                  </div>
+                )}
+                
+                {/* HABITS TAB */}
+                {activeTab === "habits" && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between">
+                      <h1 className="text-2xl font-bold">My Habits</h1>
+                      <Button onClick={() => setShowAddHabitModal(true)}>
+                        Add Habit
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {habits.map((habit) => {
+                        const today = new Date().getDay();
+                        const adjustedIndex = today === 0 ? 6 : today - 1;
+                        const currentValue = habit.data[adjustedIndex];
+                        const progress = calculateProgress(currentValue, habit.goal);
+                        
+                        return (
+                          <Card key={habit.id} className="overflow-hidden">
+                            <CardHeader className="pb-2">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white bg-${habit.color}`}>
+                                    {renderIconByName(habit.icon)}
+                                  </div>
+                                  <div className="ml-3">
+                                    <CardTitle className="text-base">{habit.name}</CardTitle>
+                                  </div>
+                                </div>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                      <span className="sr-only">Open menu</span>
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                                    <DropdownMenuItem>Archive</DropdownMenuItem>
+                                    <DropdownMenuItem className="text-destructive">
+                                      Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
+                              <CardDescription className="mt-2">
+                                Goal: {habit.goal} {habit.unit} per day
+                              </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                              <div className="space-y-3">
+                                <div className="flex justify-between text-sm">
+                                  <span>Progress</span>
+                                  <span>{currentValue} / {habit.goal} {habit.unit}</span>
+                                </div>
+                                <Progress value={progress} className="h-2" />
+                                
+                                {habit.streak > 0 && (
+                                  <div className="flex items-center text-amber-500">
+                                    <Flame className="h-4 w-4 mr-1" />
+                                    <span className="text-sm font-medium">{habit.streak} day streak</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="mt-4">
+                                <p className="text-xs text-muted-foreground mb-2">
+                                  Last 7 days:
+                                </p>
+                                <div className="flex justify-between">
+                                  {days.map((day, index) => {
+                                    const value = habit.data[index];
+                                    const isCompleted = habit.name === "Screen Time" 
+                                      ? value <= habit.goal 
+                                      : value >= habit.goal;
+                                    
+                                    return (
+                                      <div key={index} className="flex flex-col items-center">
+                                        <div
+                                          className={`h-8 w-8 rounded-full flex items-center justify-center text-xs ${
+                                            isCompleted 
+                                              ? "bg-green-500 text-white" 
+                                              : "bg-gray-100 text-gray-500 dark:bg-gray-800"
+                                          }`}
+                                        >
+                                          {isCompleted ? <Check className="h-3 w-3" /> : null}
+                                        </div>
+                                        <div className="text-xs mt-1">{day[0]}</div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                {/* ANALYTICS TAB */}
+                {activeTab === "analytics" && (
+                  <div className="space-y-6">
+                    <h1 className="text-2xl font-bold">Analytics</h1>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Weekly Overview</CardTitle>
+                        <CardDescription>Your habit completion rate for the past week</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-[300px]">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart 
+                              data={days.map((day, i) => {
+                                const total = habits.length;
+                                const completed = habits.filter(h => {
+                                  const val = h.data[i];
+                                  return h.name === "Screen Time" ? val <= h.goal : val >= h.goal;
+                                }).length;
+                                
+                                return {
+                                  name: day,
+                                  value: (completed / total) * 100
+                                };
+                              })}
+                              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                            >
+                              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                              <XAxis dataKey="name" />
+                              <YAxis domain={[0, 100]} tickFormatter={(tick) => `${tick}%`} />
+                              <Tooltip 
+                                formatter={(value: string | number) => [`${Number(value).toFixed(1)}%`, 'Completion Rate']}
+                                labelFormatter={(label) => `${label}`}
+                              />
+                              <Bar dataKey="value" fill="#8B5CF6" radius={[4, 4, 0, 0]}>
+                                {days.map((_, index) => (
+                                  <Cell 
+                                    key={`cell-${index}`}
+                                    fill={`hsl(${262 + (index * 10)}, 83%, ${58 - (index * 3)}%)`}
+                                  />
+                                ))}
+                              </Bar>
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Habit Performance</CardTitle>
+                          <CardDescription>Average completion rate by habit</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart
+                                layout="vertical"
+                                data={habits.map(habit => {
+                                  const completedDays = habit.data.filter((val, i) => 
+                                    habit.name === "Screen Time" ? val <= habit.goal : val >= habit.goal
+                                  ).length;
+                                  
+                                  return {
+                                    name: habit.name,
+                                    value: (completedDays / 7) * 100
+                                  };
+                                })}
+                                margin={{ top: 5, right: 30, left: 50, bottom: 5 }}
+                              >
+                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                                <XAxis type="number" domain={[0, 100]} tickFormatter={(tick) => `${tick}%`} />
+                                <YAxis type="category" dataKey="name" width={80} />
+                                <Tooltip 
+                                  formatter={(value: string | number) => [`${Number(value).toFixed(1)}%`, 'Completion Rate']}
+                                  labelFormatter={(label) => `${label}`}
+                                />
+                                <Bar dataKey="value" fill="#0EA5E9" radius={[0, 4, 4, 0]} />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Consistency Score</CardTitle>
+                          <CardDescription>How consistent you are with each habit</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                          <div className="space-y-8">
+                            {habits.map(habit => {
+                              // Calculate consistency - how close to the goal each day
+                              const consistencyScore = habit.data.reduce((acc, val) => {
+                                if (habit.name === "Screen Time") {
+                                  // For screen time, less is better
+                                  return acc + (val <= habit.goal ? 100 : (habit.goal / val) * 100);
+                                } else {
+                                  // For other habits, more is better
+                                  return acc + (val >= habit.goal ? 100 : (val / habit.goal) * 100);
+                                }
+                              }, 0) / 7;
+                              
+                              return (
+                                <div key={habit.id} className="space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center">
+                                      <div className={`h-6 w-6 rounded-full flex items-center justify-center text-white bg-${habit.color} mr-2`}>
+                                        {renderIconByName(habit.icon)}
+                                      </div>
+                                      <span className="text-sm font-medium">{habit.name}</span>
+                                    </div>
+                                    <span className="text-sm font-medium">{consistencyScore.toFixed(0)}%</span>
+                                  </div>
+                                  <Progress value={consistencyScore} className="h-2" />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                )}
+                
+                {/* CALENDAR TAB */}
+                {activeTab === "calendar" && (
+                  <div className="space-y-6">
+                    <h1 className="text-2xl font-bold">Calendar</h1>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>May 2025</CardTitle>
+                        <CardDescription>Track your habits across the month</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-7 gap-1 text-center">
+                          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => (
+                            <div key={i} className="py-2 text-sm font-medium">
+                              {day}
+                            </div>
+                          ))}
+                          
+                          {/* Week 1 */}
+                          <div className="h-24 p-1 bg-muted/30 rounded border border-border/50"></div>
+                          <div className="h-24 p-1 bg-muted/30 rounded border border-border/50">
+                            <div className="text-xs mb-1 font-medium">1</div>
+                            <div className="space-y-1">
+                              {[1, 2, 3].map((i) => (
+                                <div key={i} className="h-1.5 rounded-full bg-green-500"></div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="h-24 p-1 bg-muted/30 rounded border border-border/50">
+                            <div className="text-xs mb-1 font-medium">2</div>
+                            <div className="space-y-1">
+                              {[1, 2, 3, 4].map((i) => (
+                                <div key={i} className={`h-1.5 rounded-full ${i === 3 ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="h-24 p-1 bg-muted/30 rounded border border-border/50">
+                            <div className="text-xs mb-1 font-medium">3</div>
+                            <div className="space-y-1">
+                              {[1, 2].map((i) => (
+                                <div key={i} className={`h-1.5 rounded-full bg-green-500`}></div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="h-24 p-1 bg-muted/30 rounded border border-border/50">
+                            <div className="text-xs mb-1 font-medium">4</div>
+                            <div className="space-y-1">
+                              {[1, 2, 3, 4, 5].map((i) => (
+                                <div key={i} className={`h-1.5 rounded-full ${i === 1 || i === 4 ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                              ))}
+                            </div>
+                          </div>
+                          <div className="h-24 p-1 bg-muted/30 rounded border border-border/50">
+                            <div className="text-xs mb-1 font-medium">5</div>
+                            <div className="space-y-1">
+                              {[1, 2].map((i) => (
+                                <div key={i} className={`h-1.5 rounded-full ${i === 1 ? 'bg-red-500' : 'bg-green-500'}`}></div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          {/* Add more weeks and days - simplified for demo */}
+                          {Array.from({ length: 30 }, (_, i) => (
+                            <div key={i + 6} className="h-24 p-1 bg-muted/30 rounded border border-border/50">
+                              {i + 6 <= 31 && <div className="text-xs mb-1 font-medium">{i + 6}</div>}
+                              {i + 6 <= 31 && Math.random() > 0.3 && (
+                                <div className="space-y-1">
+                                  {Array.from({ length: Math.floor(Math.random() * 5) + 1 }, (_, j) => (
+                                    <div 
+                                      key={j} 
+                                      className={`h-1.5 rounded-full ${
+                                        Math.random() > 0.8 ? 'bg-red-500' : 'bg-green-500'
+                                      }`}
+                                    ></div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <div className="flex items-center justify-between gap-2">
+                      <Card className="flex-1">
+                        <CardContent className="p-4 flex items-center gap-4">
+                          <div className="h-10 w-10 bg-green-500/20 rounded-full flex items-center justify-center">
+                            <Check className="h-5 w-5 text-green-500" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Completed Days</p>
+                            <p className="text-xl font-bold">24</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className="flex-1">
+                        <CardContent className="p-4 flex items-center gap-4">
+                          <div className="h-10 w-10 bg-amber-500/20 rounded-full flex items-center justify-center">
+                            <Flame className="h-5 w-5 text-amber-500" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Best Streak</p>
+                            <p className="text-xl font-bold">7 days</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card className="flex-1">
+                        <CardContent className="p-4 flex items-center gap-4">
+                          <div className="h-10 w-10 bg-blue-500/20 rounded-full flex items-center justify-center">
+                            <Percent className="h-5 w-5 text-blue-500" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium">Completion Rate</p>
+                            <p className="text-xl font-bold">78%</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  </div>
+                )}
+                
+                {/* SETTINGS TAB */}
+                {activeTab === "settings" && (
+                  <div className="space-y-6">
+                    <h1 className="text-2xl font-bold">Settings</h1>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Preferences</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">Dark Mode</p>
+                            <p className="text-sm text-muted-foreground">
+                              Toggle between light and dark mode
+                            </p>
+                          </div>
+                          <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
+                        </div>
+                        
+                        <Separator />
+                        
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">Notifications</p>
+                            <p className="text-sm text-muted-foreground">
+                              Receive reminders for your habits
+                            </p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                        
+                        <Separator />
+                        
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">Weekly Report</p>
+                            <p className="text-sm text-muted-foreground">
+                              Receive a weekly summary of your habits
+                            </p>
+                          </div>
+                          <Switch defaultChecked />
+                        </div>
+                        
+                        <Separator />
+                        
+                        <div className="space-y-2">
+                          <p className="font-medium">Reminder Time</p>
+                          <p className="text-sm text-muted-foreground">
+                            Set when you'd like to receive daily reminders
+                          </p>
+                          <div className="flex space-x-2">
+                            <Input
+                              type="time"
+                              defaultValue="20:00"
+                              className="w-full"
+                            />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Account</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">Email</p>
+                          <Input defaultValue="jane@example.com" />
+                        </div>
+                        <div className="space-y-2">
+                          <p className="text-sm font-medium">Password</p>
+                          <Input type="password" value="********" readOnly />
+                        </div>
+                        <Button variant="outline">Change Password</Button>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Data Management</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">Export Data</p>
+                            <p className="text-sm text-muted-foreground">
+                              Download all your habit data as JSON
+                            </p>
+                          </div>
+                          <Button variant="outline">Export</Button>
+                        </div>
+                        
+                        <Separator />
+                        
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium text-destructive">Delete Account</p>
+                            <p className="text-sm text-muted-foreground">
+                              Permanently delete your account and all data
+                            </p>
+                          </div>
+                          <Button variant="destructive">Delete</Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
+            
+            {/* Fixed footer */}
+            <footer className="border-t bg-background py-6 px-4 md:px-6">
+              <div className="mx-auto max-w-7xl">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2 flex items-center">
+                      <Zap className="h-5 w-5 text-primary mr-2" />
+                      HabitTracker
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Build better habits and track your progress with our intuitive habit tracking app.
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="font-medium mb-2">Support</h4>
+                      <ul className="space-y-2 text-sm">
+                        <li><a href="#" className="text-muted-foreground hover:text-foreground">Help Center</a></li>
+                        <li><a href="#" className="text-muted-foreground hover:text-foreground">FAQ</a></li>
+                        <li><a href="#" className="text-muted-foreground hover:text-foreground">Contact Us</a></li>
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 className="font-medium mb-2">Company</h4>
+                      <ul className="space-y-2 text-sm">
+                        <li><a href="#" className="text-muted-foreground hover:text-foreground">About</a></li>
+                        <li><a href="#" className="text-muted-foreground hover:text-foreground">Privacy</a></li>
+                        <li><a href="#" className="text-muted-foreground hover:text-foreground">Terms</a></li>
+                      </ul>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-medium mb-2">Stay Updated</h4>
+                    <div className="flex space-x-2">
+                      <Input placeholder="Enter your email" className="max-w-[220px]" />
+                      <Button>Subscribe</Button>
+                    </div>
+                    <div className="flex space-x-4 mt-4">
+                      <a href="#" aria-label="Twitter" className="text-muted-foreground hover:text-foreground">
+                        <Twitter className="h-5 w-5" />
+                      </a>
+                      <a href="#" aria-label="Instagram" className="text-muted-foreground hover:text-foreground">
+                        <Instagram className="h-5 w-5" />
+                      </a>
+                      <a href="#" aria-label="Facebook" className="text-muted-foreground hover:text-foreground">
+                        <Facebook className="h-5 w-5" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-8 pt-4 border-t flex flex-col md:flex-row justify-between items-center">
+                  <p className="text-sm text-muted-foreground">&copy; 2025 HabitTracker. All rights reserved.</p>
+                  <div className="flex space-x-4 mt-4 md:mt-0">
+                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground">Privacy Policy</a>
+                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground">Terms of Service</a>
+                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground">Cookies</a>
+                  </div>
+                </div>
+              </div>
+            </footer>
+          </main>
         </div>
       </div>
-    );
-  };
-  
-  // New Habit Modal Component
-  const NewHabitModal = () => {
-    if (!newHabitModalOpen) return null;
-    
-    const habitIcons = ['📝', '💧', '😴', '📱', '🏃', '🧘', '📚', '🥗', '🎸', '💪', '🧠', '🧹'];
-    const habitColors = ['blue', 'purple', 'pink', 'orange', 'green', 'teal', 'red', 'yellow'];
-    
-    return (
-      <div className="fixed inset-0 z-50 overflow-y-auto">
-        <div className="flex items-center justify-center min-h-screen p-4">
-          <div className="fixed inset-0 bg-black bg-opacity-25 transition-opacity" onClick={() => setNewHabitModalOpen(false)}></div>
-          
-          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6 animate-scale-in">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900">Create New Habit</h2>
-              <button
-                onClick={() => setNewHabitModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                aria-label="Close"
-              >
-                <IconClose />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCreateHabit}>
-              <div className="space-y-6">
-                <div>
-                  <label htmlFor="habit-name" className="block text-sm font-medium text-gray-700 mb-1">
+      
+      {/* Add Habit Modal */}
+      {showAddHabitModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Add New Habit</CardTitle>
+              <CardDescription>Create a new habit to track daily</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label htmlFor="habitName" className="text-sm font-medium">
                     Habit Name
                   </label>
-                  <input
-                    type="text"
-                    id="habit-name"
-                    className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-opacity-50 focus:ring-indigo-300 focus:border-indigo-300 ${
-                      formErrors.name ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="e.g., Drink Water"
+                  <Input
+                    id="habitName"
+                    placeholder="e.g. Drink Water, Meditate"
                     value={newHabit.name}
                     onChange={(e) => setNewHabit({ ...newHabit, name: e.target.value })}
                   />
-                  {formErrors.name && (
-                    <p className="mt-1 text-sm text-red-600">{formErrors.name}</p>
-                  )}
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Icon
-                  </label>
-                  <div className="grid grid-cols-6 gap-2">
-                    {habitIcons.map((icon) => (
-                      <button
-                        key={icon}
-                        type="button"
-                        className={`flex items-center justify-center h-10 rounded-md text-xl ${
-                          newHabit.icon === icon ? 'bg-indigo-100 border-2 border-indigo-500' : 'border border-gray-300'
-                        }`}
-                        onClick={() => setNewHabit({ ...newHabit, icon })}
-                      >
-                        {icon}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="flex space-x-4">
-                  <div className="flex-1">
-                    <label htmlFor="habit-target" className="block text-sm font-medium text-gray-700 mb-1">
-                      Daily Target
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label htmlFor="habitGoal" className="text-sm font-medium">
+                      Daily Goal
                     </label>
-                    <input
+                    <Input
+                      id="habitGoal"
                       type="number"
-                      id="habit-target"
                       min="1"
-                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-opacity-50 focus:ring-indigo-300 focus:border-indigo-300 ${
-                        formErrors.target ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="e.g., 8"
-                      value={newHabit.target}
-                      onChange={(e) => setNewHabit({ ...newHabit, target: Number(e.target.value) })}
+                      value={newHabit.goal}
+                      onChange={(e) => setNewHabit({ ...newHabit, goal: parseInt(e.target.value) || 1 })}
                     />
-                    {formErrors.target && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.target}</p>
-                    )}
                   </div>
-                  
-                  <div className="flex-1">
-                    <label htmlFor="habit-unit" className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className="space-y-2">
+                    <label htmlFor="habitUnit" className="text-sm font-medium">
                       Unit
                     </label>
-                    <input
-                      type="text"
-                      id="habit-unit"
-                      className={`w-full px-3 py-2 border rounded-md shadow-sm focus:ring focus:ring-opacity-50 focus:ring-indigo-300 focus:border-indigo-300 ${
-                        formErrors.unit ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                      placeholder="e.g., glasses"
+                    <Input
+                      id="habitUnit"
+                      placeholder="e.g. glasses, minutes"
                       value={newHabit.unit}
                       onChange={(e) => setNewHabit({ ...newHabit, unit: e.target.value })}
                     />
-                    {formErrors.unit && (
-                      <p className="mt-1 text-sm text-red-600">{formErrors.unit}</p>
-                    )}
                   </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Color
-                  </label>
-                  <div className="grid grid-cols-8 gap-2">
-                    {habitColors.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        className={`h-10 rounded-md border-2 ${getColorClass(color, 'bg')} ${
-                          newHabit.color === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''
-                        }`}
-                        onClick={() => setNewHabit({ ...newHabit, color })}
-                        aria-label={`Select ${color} color`}
-                      ></button>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="pt-4 border-t border-gray-300 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setNewHabitModalOpen(false)}
-                    className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-indigo-600 border border-transparent rounded-md text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                  >
-                    Create Habit
-                  </button>
                 </div>
               </div>
-            </form>
-          </div>
+            </CardContent>
+            <CardFooter className="flex justify-between">
+              <Button variant="outline" onClick={() => setShowAddHabitModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={addNewHabit}>
+                Add Habit
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
-      </div>
-    );
-  };
-  
-  // Toast notification
-  const Toast = () => {
-    if (!toast.visible) return null;
-    
-    return (
-      <div className={`fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300 ${
-        toast.visible ? 'opacity-100' : 'opacity-0'
-      }`}>
-        {toast.message}
-      </div>
-    );
-  };
-  
-  // Main layout
-  return (
-    <div className="min-h-screen flex flex-col">
-      {activeView !== 'landing' && <Navbar />}
-      
-      <main className="flex-grow">
-        {activeView === 'landing' && <LandingPage />}
-        {activeView === 'dashboard' && <Dashboard />}
-        {activeView === 'analytics' && <Analytics />}
-        {activeView === 'habitDetail' && <HabitDetail />}
-      </main>
-      
-      {activeView !== 'landing' && <Footer />}
-      
-      <SettingsModal />
-      <NewHabitModal />
-      <Toast />
+      )}
     </div>
   );
 };
 
-// Type definitions
-interface HabitHistory {
-  date: string;
-  completed: number;
-}
+export default Index;
 
-interface Habit {
-  id: string;
-  name: string;
-  icon: string;
-  target: number;
-  unit: string;
-  color: string;
-  progress: number;
-  streakDays: number;
-  history: HabitHistory[];
-}
-
-// Define ReferenceLine component for Recharts
-const ReferenceLine = ({
-  y,
-  stroke,
-  strokeDasharray,
-  label,
-}: {
-  y: number;
-  stroke: string;
-  strokeDasharray: string;
-  label?: {
-    position: string;
-    value: string;
-    fill: string;
-    fontSize: number;
-  };
-}) => {
-  return null; // This is a mock component that Recharts will replace with its actual implementation
+// Missing import helper components
+const CheckCheck = (props: any) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M18 6 7 17l-5-5" />
+      <path d="m22 10-7.5 7.5L13 16" />
+    </svg>
+  );
 };
 
-export default Index;
+const Flame = (props: any) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+    </svg>
+  );
+};
+
+const MoreHorizontal = (props: any) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <circle cx="12" cy="12" r="1" />
+      <circle cx="19" cy="12" r="1" />
+      <circle cx="5" cy="12" r="1" />
+    </svg>
+  );
+};
+
+const Percent = (props: any) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <line x1="19" x2="5" y1="5" y2="19" />
+      <circle cx="6.5" cy="6.5" r="2.5" />
+      <circle cx="17.5" cy="17.5" r="2.5" />
+    </svg>
+  );
+};
+
+const Twitter = (props: any) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+    </svg>
+  );
+};
+
+const Instagram = (props: any) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+};
+
+const Facebook = (props: any) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+    </svg>
+  );
+};
