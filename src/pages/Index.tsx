@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +9,10 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, PieChart, Pie, Cell } from "recharts";
 import { Moon, Sun, Menu, X, Bell, Settings, ChevronRight, User, Home, BarChart3, Calendar, Droplets, Coffee, Smartphone, Moon as MoonIcon, Zap, Info, Award, TrendingUp, Heart, Check, AlertCircle } from "lucide-react";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { motion, AnimatePresence } from "framer-motion";
 import { useLocation, useNavigate } from "react-router-dom";
 
 // Mock data for habits
@@ -169,7 +167,7 @@ const Index = () => {
   const [showAddHabitModal, setShowAddHabitModal] = useState(false);
   const [newHabit, setNewHabit] = useState({ name: "", goal: 1, unit: "" });
 
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
 
   // Toggle dark mode
   const toggleDarkMode = () => {
@@ -381,12 +379,10 @@ const Index = () => {
 
         <div className="flex flex-1">
           {/* Sidebar for navigation */}
-          <motion.aside 
+          <aside 
             className={`fixed inset-y-0 left-0 z-20 w-64 bg-sidebar border-r border-sidebar-border transform transition-transform lg:translate-x-0 lg:static lg:w-64 ${
               sidebarOpen ? "translate-x-0" : "-translate-x-full"
             }`}
-            initial={false}
-            animate={{ x: sidebarOpen ? 0 : isMobile ? -320 : 0 }}
           >
             <div className="flex flex-col h-full pt-16">
               <div className="p-4">
@@ -462,802 +458,199 @@ const Index = () => {
                 </Card>
               </div>
             </div>
-          </motion.aside>
+          </aside>
 
           {/* Main content area */}
           <main className="flex-1 overflow-hidden">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto"
-              >
-                {/* Dashboard */}
-                {activeTab === "dashboard" && (
-                  <div className="space-y-6">
-                    {/* Header with date and overall completion */}
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div>
-                        <h1 className="text-2xl font-bold">Daily Progress</h1>
-                        <p className="text-muted-foreground">{formatDate(currentDate)}</p>
-                      </div>
-                      <Card className="w-full md:w-auto">
-                        <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-4">
-                          <div className="relative h-16 w-16">
-                            <PieChart width={64} height={64}>
-                              <Pie
-                                data={completionData}
-                                innerRadius={25}
-                                outerRadius={30}
-                                paddingAngle={2}
-                                dataKey="value"
-                                stroke="none"
-                              >
-                                {completionData.map((entry, index) => (
-                                  <Cell
-                                    key={`cell-${index}`}
-                                    fill={COLORS[index % COLORS.length]}
-                                  />
-                                ))}
-                              </Pie>
-                            </PieChart>
-                            <div className="absolute top-0 left-0 right-0 bottom-0 flex items-center justify-center">
-                              <p className="text-sm font-bold">{calculateOverallCompletion()}%</p>
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Today's Progress</p>
-                            <p className="text-xs text-muted-foreground">
-                              {habits.filter(h => wasHabitCompletedToday(h)).length} of {habits.length} habits completed
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                      {weeklyStats.map((stat, index) => (
-                        <StatCard key={index} {...stat} />
-                      ))}
-                    </div>
-
-                    {/* Quote of the day */}
-                    <Card className="bg-gradient-to-r from-primary/20 to-primary/5">
-                      <CardContent className="p-6">
-                        <p className="text-lg font-medium italic">{quote}</p>
-                      </CardContent>
-                    </Card>
-
-                    {/* Main Content Tabs */}
-                    <Tabs defaultValue="today" className="w-full">
-                      <TabsList className="w-full sm:w-auto grid grid-cols-3">
-                        <TabsTrigger value="today">Today's Habits</TabsTrigger>
-                        <TabsTrigger value="charts">Insights</TabsTrigger>
-                        <TabsTrigger value="streaks">Streaks</TabsTrigger>
-                      </TabsList>
-                      <TabsContent value="today" className="space-y-4 mt-4">
-                        {/* Today's habits */}
-                        {habits.map((habit) => {
-                          const today = new Date().getDay();
-                          const adjustedIndex = today === 0 ? 6 : today - 1;
-                          const currentValue = habit.data[adjustedIndex];
-                          const progress = calculateProgress(currentValue, habit.goal);
-                          
-                          return (
-                            <Card key={habit.id} className="overflow-hidden">
-                              <CardContent className="p-0">
-                                <div className="p-6">
-                                  <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center">
-                                      <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white bg-${habit.color}`}>
-                                        {renderIconByName(habit.icon)}
-                                      </div>
-                                      <div className="ml-4">
-                                        <h3 className="font-medium">{habit.name}</h3>
-                                        <p className="text-sm text-muted-foreground">
-                                          Goal: {habit.goal} {habit.unit}
-                                        </p>
-                                      </div>
-                                    </div>
-                                    <Badge 
-                                      variant={wasHabitCompletedToday(habit) ? "default" : "outline"}
-                                      className={wasHabitCompletedToday(habit) ? "bg-green-500/20 text-green-600 hover:bg-green-500/20" : ""}
-                                    >
-                                      {wasHabitCompletedToday(habit) ? 
-                                        <><Check className="h-3 w-3 mr-1" /> Complete</> : 
-                                        'Pending'}
-                                    </Badge>
-                                  </div>
-                                  
-                                  <div className="mt-4 space-y-3">
-                                    <div className="flex items-center justify-between">
-                                      <span className="text-sm">{currentValue} {habit.unit}</span>
-                                      <span className="text-sm">{habit.goal} {habit.unit}</span>
-                                    </div>
-                                    <Progress value={progress} className="h-2" />
-                                    
-                                    <div>
-                                      <p className="text-xs text-muted-foreground mb-2">
-                                        Adjust today's value:
-                                      </p>
-                                      <div className="flex items-center">
-                                        <Slider
-                                          className="flex-1 custom-slider"
-                                          defaultValue={[currentValue]}
-                                          max={habit.name === "Screen Time" ? habit.goal * 2 : habit.goal * 1.5}
-                                          step={habit.unit === "hours" ? 0.5 : 1}
-                                          onValueChange={(value) => {
-                                            updateHabitValue(habit.id, value[0]);
-                                          }}
-                                        />
-                                        <span className="ml-4 w-12 text-center">
-                                          {currentValue}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          );
-                        })}
-                        
-                        <Button 
-                          className="w-full mt-4" 
-                          variant="outline"
-                          onClick={() => setShowAddHabitModal(true)}
-                        >
-                          + Add New Habit
-                        </Button>
-                      </TabsContent>
-                      
-                      <TabsContent value="charts" className="space-y-6 mt-4">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                          {/* Sleep Chart */}
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="text-lg">Sleep Pattern</CardTitle>
-                              <CardDescription>Last 7 days sleeping hours</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="h-[250px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                  <AreaChart data={sleepData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                                    <defs>
-                                      <linearGradient id="sleepColor" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.8} />
-                                        <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0} />
-                                      </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip content={<CustomTooltip unit="hours" />} />
-                                    <Area 
-                                      type="monotone" 
-                                      dataKey="hours" 
-                                      stroke="#8B5CF6" 
-                                      fillOpacity={1} 
-                                      fill="url(#sleepColor)" 
-                                    />
-                                  </AreaChart>
-                                </ResponsiveContainer>
-                              </div>
-                            </CardContent>
-                          </Card>
-                          
-                          {/* Water Intake Chart */}
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="text-lg">Water Intake</CardTitle>
-                              <CardDescription>Last 7 days consumption</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="h-[250px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                  <BarChart data={waterData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip content={<CustomTooltip unit="glasses" />} />
-                                    <Bar 
-                                      dataKey="glasses" 
-                                      fill="#0EA5E9" 
-                                      radius={[4, 4, 0, 0]} 
-                                    />
-                                  </BarChart>
-                                </ResponsiveContainer>
-                              </div>
-                            </CardContent>
-                          </Card>
-                          
-                          {/* Screen Time Chart */}
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="text-lg">Screen Time</CardTitle>
-                              <CardDescription>Last 7 days usage</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="h-[250px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                  <LineChart data={screenTimeData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip content={<CustomTooltip unit="minutes" />} />
-                                    <Line 
-                                      type="monotone" 
-                                      dataKey="minutes" 
-                                      stroke="#EF4444" 
-                                      strokeWidth={2}
-                                      dot={{ r: 4 }}
-                                      activeDot={{ r: 6, stroke: "#EF4444", strokeWidth: 2, fill: "#FFFFFF" }}
-                                    />
-                                  </LineChart>
-                                </ResponsiveContainer>
-                              </div>
-                            </CardContent>
-                          </Card>
-                          
-                          {/* Overall Completion Chart */}
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className="text-lg">Weekly Completion</CardTitle>
-                              <CardDescription>Habit completion by day</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="h-[250px]">
-                                <ResponsiveContainer width="100%" height="100%">
-                                  <BarChart
-                                    data={days.map((day, i) => ({
-                                      name: day,
-                                      complete: habits.filter(h => {
-                                        const val = h.data[i];
-                                        return h.name === "Screen Time" ? val <= h.goal : val >= h.goal;
-                                      }).length,
-                                      incomplete: habits.filter(h => {
-                                        const val = h.data[i];
-                                        return h.name === "Screen Time" ? val > h.goal : val < h.goal;
-                                      }).length
-                                    }))}
-                                    margin={{ top: 5, right: 20, bottom: 5, left: 0 }}
-                                  >
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Legend />
-                                    <Bar dataKey="complete" stackId="a" fill="#22C55E" radius={[4, 4, 0, 0]} />
-                                    <Bar dataKey="incomplete" stackId="a" fill="#F87171" radius={[4, 4, 0, 0]} />
-                                  </BarChart>
-                                </ResponsiveContainer>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </div>
-                      </TabsContent>
-                      
-                      <TabsContent value="streaks" className="mt-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {habits.map((habit) => (
-                            <Card key={habit.id} className={habit.streak > 0 ? "border-l-4 border-l-primary" : ""}>
-                              <CardContent className="p-4">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center">
-                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center text-white bg-${habit.color}`}>
-                                      {renderIconByName(habit.icon)}
-                                    </div>
-                                    <div className="ml-3">
-                                      <h3 className="font-medium text-sm">{habit.name}</h3>
-                                      <p className="text-xs text-muted-foreground">
-                                        Goal: {habit.goal} {habit.unit}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  <div className="text-right">
-                                    <div className="text-2xl font-bold">{habit.streak}</div>
-                                    <p className="text-xs text-muted-foreground">day streak</p>
-                                  </div>
-                                </div>
-                                
-                                <div className="mt-4">
-                                  <div className="flex justify-between mb-1">
-                                    <span className="text-xs text-muted-foreground">This Week:</span>
-                                  </div>
-                                  <div className="flex gap-1">
-                                    {habit.data.map((value, index) => {
-                                      const isCompleted = habit.name === "Screen Time" 
-                                        ? value <= habit.goal 
-                                        : value >= habit.goal;
-                                      
-                                      return (
-                                        <div 
-                                          key={index} 
-                                          className={`h-2 flex-1 rounded-full ${
-                                            isCompleted ? "bg-green-500" : "bg-gray-200 dark:bg-gray-700"
-                                          }`}
-                                        />
-                                      );
-                                    })}
-                                  </div>
-                                  <div className="flex justify-between mt-1">
-                                    <span className="text-xs text-muted-foreground">Mon</span>
-                                    <span className="text-xs text-muted-foreground">Sun</span>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      </TabsContent>
-                    </Tabs>
+            <div
+              key={activeTab}
+              className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto animate-fade-in"
+            >
+              {activeTab === "dashboard" && (
+                <div>
+                  {/* Date and Quote */}
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-semibold">{formatDate(currentDate)}</h2>
+                    <p className="text-muted-foreground mt-1 italic">"{quote}"</p>
                   </div>
-                )}
-                
-                {/* HABITS TAB */}
-                {activeTab === "habits" && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h1 className="text-2xl font-bold">My Habits</h1>
-                      <Button onClick={() => setShowAddHabitModal(true)}>
-                        Add Habit
-                      </Button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {habits.map((habit) => {
-                        const today = new Date().getDay();
-                        const adjustedIndex = today === 0 ? 6 : today - 1;
-                        const currentValue = habit.data[adjustedIndex];
-                        const progress = calculateProgress(currentValue, habit.goal);
-                        
-                        return (
-                          <Card key={habit.id} className="overflow-hidden">
-                            <CardHeader className="pb-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center">
-                                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white bg-${habit.color}`}>
-                                    {renderIconByName(habit.icon)}
-                                  </div>
-                                  <div className="ml-3">
-                                    <CardTitle className="text-base">{habit.name}</CardTitle>
-                                  </div>
-                                </div>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                      <span className="sr-only">Open menu</span>
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end">
-                                    <DropdownMenuItem>Edit</DropdownMenuItem>
-                                    <DropdownMenuItem>Archive</DropdownMenuItem>
-                                    <DropdownMenuItem className="text-destructive">
-                                      Delete
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                              <CardDescription className="mt-2">
-                                Goal: {habit.goal} {habit.unit} per day
-                              </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                              <div className="space-y-3">
-                                <div className="flex justify-between text-sm">
-                                  <span>Progress</span>
-                                  <span>{currentValue} / {habit.goal} {habit.unit}</span>
-                                </div>
-                                <Progress value={progress} className="h-2" />
-                                
-                                {habit.streak > 0 && (
-                                  <div className="flex items-center text-amber-500">
-                                    <Flame className="h-4 w-4 mr-1" />
-                                    <span className="text-sm font-medium">{habit.streak} day streak</span>
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <div className="mt-4">
-                                <p className="text-xs text-muted-foreground mb-2">
-                                  Last 7 days:
-                                </p>
-                                <div className="flex justify-between">
-                                  {days.map((day, index) => {
-                                    const value = habit.data[index];
-                                    const isCompleted = habit.name === "Screen Time" 
-                                      ? value <= habit.goal 
-                                      : value >= habit.goal;
-                                    
-                                    return (
-                                      <div key={index} className="flex flex-col items-center">
-                                        <div
-                                          className={`h-8 w-8 rounded-full flex items-center justify-center text-xs ${
-                                            isCompleted 
-                                              ? "bg-green-500 text-white" 
-                                              : "bg-gray-100 text-gray-500 dark:bg-gray-800"
-                                          }`}
-                                        >
-                                          {isCompleted ? <Check className="h-3 w-3" /> : null}
-                                        </div>
-                                        <div className="text-xs mt-1">{day[0]}</div>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
-                    </div>
+
+                  {/* Stats Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {weeklyStats.map((stat, index) => (
+                      <StatCard 
+                        key={index} 
+                        title={stat.name} 
+                        value={stat.value} 
+                        change={stat.change} 
+                        isPositive={stat.isPositive} 
+                      />
+                    ))}
                   </div>
-                )}
-                
-                {/* ANALYTICS TAB */}
-                {activeTab === "analytics" && (
-                  <div className="space-y-6">
-                    <h1 className="text-2xl font-bold">Analytics</h1>
-                    
+
+                  {/* Charts and Progress */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
+                    {/* Sleep Chart */}
                     <Card>
                       <CardHeader>
-                        <CardTitle>Weekly Overview</CardTitle>
-                        <CardDescription>Your habit completion rate for the past week</CardDescription>
+                        <CardTitle>Sleep Analysis</CardTitle>
+                        <CardDescription>Weekly sleep patterns</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className="h-[300px]">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart 
-                              data={days.map((day, i) => {
-                                const total = habits.length;
-                                const completed = habits.filter(h => {
-                                  const val = h.data[i];
-                                  return h.name === "Screen Time" ? val <= h.goal : val >= h.goal;
-                                }).length;
-                                
-                                return {
-                                  name: day,
-                                  value: (completed / total) * 100
-                                };
-                              })}
-                              margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                            >
-                              <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                              <XAxis dataKey="name" />
-                              <YAxis domain={[0, 100]} tickFormatter={(tick) => `${tick}%`} />
-                              <Tooltip 
-                                formatter={(value: string | number) => [`${Number(value).toFixed(1)}%`, 'Completion Rate']}
-                                labelFormatter={(label) => `${label}`}
-                              />
-                              <Bar dataKey="value" fill="#8B5CF6" radius={[4, 4, 0, 0]}>
-                                {days.map((_, index) => (
-                                  <Cell 
-                                    key={`cell-${index}`}
-                                    fill={`hsl(${262 + (index * 10)}, 83%, ${58 - (index * 3)}%)`}
-                                  />
-                                ))}
-                              </Bar>
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
+                        <ResponsiveContainer width="100%" height={250}>
+                          <AreaChart data={sleepData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis unit="hrs" />
+                            <Tooltip content={<CustomTooltip unit="hrs" />} />
+                            <Area type="monotone" dataKey="hours" stroke="#8B5CF6" fill="#C4B5FD" />
+                          </AreaChart>
+                        </ResponsiveContainer>
                       </CardContent>
                     </Card>
-                    
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <Card>
+
+                    {/* Water Intake Chart */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Water Intake</CardTitle>
+                        <CardDescription>Daily water consumption</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={250}>
+                          <BarChart data={waterData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis unit="glasses" />
+                            <Tooltip content={<CustomTooltip unit="glasses" />} />
+                            <Bar dataKey="glasses" fill="#3B82F6" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+
+                    {/* Screen Time Chart */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Screen Time</CardTitle>
+                        <CardDescription>Daily screen time analysis</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <ResponsiveContainer width="100%" height={250}>
+                          <LineChart data={screenTimeData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" />
+                            <YAxis unit="mins" />
+                            <Tooltip content={<CustomTooltip unit="mins" />} />
+                            <Line type="monotone" dataKey="minutes" stroke="#EF4444" fill="#FCA5A5" />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+
+                    {/* Overall Completion Rate */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Overall Completion</CardTitle>
+                        <CardDescription>Habit completion rate</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex items-center justify-center">
+                        <ResponsiveContainer width="100%" height={250}>
+                          <PieChart>
+                            <Pie
+                              dataKey="value"
+                              data={completionData}
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              fill="#8884d8"
+                              label
+                            >
+                              {completionData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "habits" && (
+                <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-semibold">My Habits</h2>
+                    <Button onClick={() => setShowAddHabitModal(true)}>Add New Habit</Button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {habits.map(habit => (
+                      <Card key={habit.id}>
                         <CardHeader>
-                          <CardTitle>Habit Performance</CardTitle>
-                          <CardDescription>Average completion rate by habit</CardDescription>
+                          <CardTitle className="flex items-center gap-2">
+                            {renderIconByName(habit.icon)}
+                            {habit.name}
+                          </CardTitle>
+                          <CardDescription>
+                            Goal: {habit.goal} {habit.unit}
+                          </CardDescription>
                         </CardHeader>
                         <CardContent>
-                          <div className="h-[300px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <BarChart
-                                layout="vertical"
-                                data={habits.map(habit => {
-                                  const completedDays = habit.data.filter((val, i) => 
-                                    habit.name === "Screen Time" ? val <= habit.goal : val >= habit.goal
-                                  ).length;
-                                  
-                                  return {
-                                    name: habit.name,
-                                    value: (completedDays / 7) * 100
-                                  };
-                                })}
-                                margin={{ top: 5, right: 30, left: 50, bottom: 5 }}
-                              >
-                                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                <XAxis type="number" domain={[0, 100]} tickFormatter={(tick) => `${tick}%`} />
-                                <YAxis type="category" dataKey="name" width={80} />
-                                <Tooltip 
-                                  formatter={(value: string | number) => [`${Number(value).toFixed(1)}%`, 'Completion Rate']}
-                                  labelFormatter={(label) => `${label}`}
-                                />
-                                <Bar dataKey="value" fill="#0EA5E9" radius={[0, 4, 4, 0]} />
-                              </BarChart>
-                            </ResponsiveContainer>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Consistency Score</CardTitle>
-                          <CardDescription>How consistent you are with each habit</CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-6">
-                          <div className="space-y-8">
-                            {habits.map(habit => {
-                              // Calculate consistency - how close to the goal each day
-                              const consistencyScore = habit.data.reduce((acc, val) => {
-                                if (habit.name === "Screen Time") {
-                                  // For screen time, less is better
-                                  return acc + (val <= habit.goal ? 100 : (habit.goal / val) * 100);
-                                } else {
-                                  // For other habits, more is better
-                                  return acc + (val >= habit.goal ? 100 : (val / habit.goal) * 100);
-                                }
-                              }, 0) / 7;
-                              
-                              return (
-                                <div key={habit.id} className="space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center">
-                                      <div className={`h-6 w-6 rounded-full flex items-center justify-center text-white bg-${habit.color} mr-2`}>
-                                        {renderIconByName(habit.icon)}
-                                      </div>
-                                      <span className="text-sm font-medium">{habit.name}</span>
-                                    </div>
-                                    <span className="text-sm font-medium">{consistencyScore.toFixed(0)}%</span>
-                                  </div>
-                                  <Progress value={consistencyScore} className="h-2" />
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                )}
-                
-                {/* CALENDAR TAB */}
-                {activeTab === "calendar" && (
-                  <div className="space-y-6">
-                    <h1 className="text-2xl font-bold">Calendar</h1>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>May 2025</CardTitle>
-                        <CardDescription>Track your habits across the month</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-7 gap-1 text-center">
-                          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, i) => (
-                            <div key={i} className="py-2 text-sm font-medium">
-                              {day}
+                          <div className="mb-4">
+                            <p className="text-sm text-muted-foreground">Progress</p>
+                            <Progress value={calculateProgress(habit.data[new Date().getDay() - 1] || 0, habit.goal)} />
+                            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+                              <span>0</span>
+                              <span>{habit.goal}</span>
                             </div>
-                          ))}
-                          
-                          {/* Week 1 */}
-                          <div className="h-24 p-1 bg-muted/30 rounded border border-border/50"></div>
-                          <div className="h-24 p-1 bg-muted/30 rounded border border-border/50">
-                            <div className="text-xs mb-1 font-medium">1</div>
-                            <div className="space-y-1">
-                              {[1, 2, 3].map((i) => (
-                                <div key={i} className="h-1.5 rounded-full bg-green-500"></div>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="h-24 p-1 bg-muted/30 rounded border border-border/50">
-                            <div className="text-xs mb-1 font-medium">2</div>
-                            <div className="space-y-1">
-                              {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className={`h-1.5 rounded-full ${i === 3 ? 'bg-red-500' : 'bg-green-500'}`}></div>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="h-24 p-1 bg-muted/30 rounded border border-border/50">
-                            <div className="text-xs mb-1 font-medium">3</div>
-                            <div className="space-y-1">
-                              {[1, 2].map((i) => (
-                                <div key={i} className={`h-1.5 rounded-full bg-green-500`}></div>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="h-24 p-1 bg-muted/30 rounded border border-border/50">
-                            <div className="text-xs mb-1 font-medium">4</div>
-                            <div className="space-y-1">
-                              {[1, 2, 3, 4, 5].map((i) => (
-                                <div key={i} className={`h-1.5 rounded-full ${i === 1 || i === 4 ? 'bg-red-500' : 'bg-green-500'}`}></div>
-                              ))}
-                            </div>
-                          </div>
-                          <div className="h-24 p-1 bg-muted/30 rounded border border-border/50">
-                            <div className="text-xs mb-1 font-medium">5</div>
-                            <div className="space-y-1">
-                              {[1, 2].map((i) => (
-                                <div key={i} className={`h-1.5 rounded-full ${i === 1 ? 'bg-red-500' : 'bg-green-500'}`}></div>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          {/* Add more weeks and days - simplified for demo */}
-                          {Array.from({ length: 30 }, (_, i) => (
-                            <div key={i + 6} className="h-24 p-1 bg-muted/30 rounded border border-border/50">
-                              {i + 6 <= 31 && <div className="text-xs mb-1 font-medium">{i + 6}</div>}
-                              {i + 6 <= 31 && Math.random() > 0.3 && (
-                                <div className="space-y-1">
-                                  {Array.from({ length: Math.floor(Math.random() * 5) + 1 }, (_, j) => (
-                                    <div 
-                                      key={j} 
-                                      className={`h-1.5 rounded-full ${
-                                        Math.random() > 0.8 ? 'bg-red-500' : 'bg-green-500'
-                                      }`}
-                                    ></div>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <div className="flex items-center justify-between gap-2">
-                      <Card className="flex-1">
-                        <CardContent className="p-4 flex items-center gap-4">
-                          <div className="h-10 w-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                            <Check className="h-5 w-5 text-green-500" />
                           </div>
                           <div>
-                            <p className="text-sm font-medium">Completed Days</p>
-                            <p className="text-xl font-bold">24</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card className="flex-1">
-                        <CardContent className="p-4 flex items-center gap-4">
-                          <div className="h-10 w-10 bg-amber-500/20 rounded-full flex items-center justify-center">
-                            <Flame className="h-5 w-5 text-amber-500" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Best Streak</p>
-                            <p className="text-xl font-bold">7 days</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                      <Card className="flex-1">
-                        <CardContent className="p-4 flex items-center gap-4">
-                          <div className="h-10 w-10 bg-blue-500/20 rounded-full flex items-center justify-center">
-                            <Percent className="h-5 w-5 text-blue-500" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Completion Rate</p>
-                            <p className="text-xl font-bold">78%</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                )}
-                
-                {/* SETTINGS TAB */}
-                {activeTab === "settings" && (
-                  <div className="space-y-6">
-                    <h1 className="text-2xl font-bold">Settings</h1>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Preferences</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Dark Mode</p>
-                            <p className="text-sm text-muted-foreground">
-                              Toggle between light and dark mode
-                            </p>
-                          </div>
-                          <Switch checked={darkMode} onCheckedChange={toggleDarkMode} />
-                        </div>
-                        
-                        <Separator />
-                        
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Notifications</p>
-                            <p className="text-sm text-muted-foreground">
-                              Receive reminders for your habits
-                            </p>
-                          </div>
-                          <Switch defaultChecked />
-                        </div>
-                        
-                        <Separator />
-                        
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Weekly Report</p>
-                            <p className="text-sm text-muted-foreground">
-                              Receive a weekly summary of your habits
-                            </p>
-                          </div>
-                          <Switch defaultChecked />
-                        </div>
-                        
-                        <Separator />
-                        
-                        <div className="space-y-2">
-                          <p className="font-medium">Reminder Time</p>
-                          <p className="text-sm text-muted-foreground">
-                            Set when you'd like to receive daily reminders
-                          </p>
-                          <div className="flex space-x-2">
-                            <Input
-                              type="time"
-                              defaultValue="20:00"
-                              className="w-full"
+                            <p className="text-sm text-muted-foreground">Update Progress</p>
+                            <Slider
+                              defaultValue={[habit.data[new Date().getDay() - 1] || 0]}
+                              max={habit.goal}
+                              step={1}
+                              onValueChange={(value) => updateHabitValue(habit.id, value[0])}
                             />
                           </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Account</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium">Email</p>
-                          <Input defaultValue="jane@example.com" />
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium">Password</p>
-                          <Input type="password" value="********" readOnly />
-                        </div>
-                        <Button variant="outline">Change Password</Button>
-                      </CardContent>
-                    </Card>
-                    
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Data Management</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">Export Data</p>
-                            <p className="text-sm text-muted-foreground">
-                              Download all your habit data as JSON
-                            </p>
+                        </CardContent>
+                        <CardFooter className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Flame className="h-4 w-4 text-orange-500" />
+                            <span>{habit.streak}</span>
                           </div>
-                          <Button variant="outline">Export</Button>
-                        </div>
-                        
-                        <Separator />
-                        
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium text-destructive">Delete Account</p>
-                            <p className="text-sm text-muted-foreground">
-                              Permanently delete your account and all data
-                            </p>
-                          </div>
-                          <Button variant="destructive">Delete</Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                          <Badge variant={wasHabitCompletedToday(habit) ? "outline" : "default"}>
+                            {wasHabitCompletedToday(habit) ? "Completed" : "Incomplete"}
+                          </Badge>
+                        </CardFooter>
+                      </Card>
+                    ))}
                   </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
+                </div>
+              )}
+
+              {activeTab === "analytics" && (
+                <div>
+                  <h2 className="text-2xl font-semibold mb-6">Analytics</h2>
+                  <p>Detailed analytics and insights coming soon!</p>
+                </div>
+              )}
+
+              {activeTab === "calendar" && (
+                <div>
+                  <h2 className="text-2xl font-semibold mb-6">Calendar</h2>
+                  <p>Calendar view and habit scheduling coming soon!</p>
+                </div>
+              )}
+
+              {activeTab === "settings" && (
+                <div>
+                  <h2 className="text-2xl font-semibold mb-6">Settings</h2>
+                  <p>App settings and customization options coming soon!</p>
+                </div>
+              )}
+            </div>
             
             {/* Fixed footer */}
             <footer className="border-t bg-background py-6 px-4 md:px-6">
@@ -1314,10 +707,10 @@ const Index = () => {
                 
                 <div className="mt-8 pt-4 border-t flex flex-col md:flex-row justify-between items-center">
                   <p className="text-sm text-muted-foreground">&copy; 2025 HabitTracker. All rights reserved.</p>
-                  <div className="flex space-x-4 mt-4 md:mt-0">
-                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground">Privacy Policy</a>
-                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground">Terms of Service</a>
-                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground">Cookies</a>
+                  <div className="flex flex-wrap justify-center md:justify-end space-x-4 mt-4 md:mt-0">
+                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground mb-2 md:mb-0">Privacy Policy</a>
+                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground mb-2 md:mb-0">Terms of Service</a>
+                    <a href="#" className="text-sm text-muted-foreground hover:text-foreground mb-2 md:mb-0">Cookies</a>
                   </div>
                 </div>
               </div>
@@ -1328,206 +721,32 @@ const Index = () => {
       
       {/* Add Habit Modal */}
       {showAddHabitModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <Card className="max-w-md w-full p-6">
             <CardHeader>
               <CardTitle>Add New Habit</CardTitle>
-              <CardDescription>Create a new habit to track daily</CardDescription>
+              <CardDescription>Create a new habit to track</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="habitName" className="text-sm font-medium">
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <label htmlFor="name" className="text-sm font-medium leading-none">
                     Habit Name
                   </label>
                   <Input
-                    id="habitName"
-                    placeholder="e.g. Drink Water, Meditate"
+                    id="name"
+                    placeholder="Drink Water"
                     value={newHabit.name}
                     onChange={(e) => setNewHabit({ ...newHabit, name: e.target.value })}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label htmlFor="habitGoal" className="text-sm font-medium">
-                      Daily Goal
-                    </label>
-                    <Input
-                      id="habitGoal"
-                      type="number"
-                      min="1"
-                      value={newHabit.goal}
-                      onChange={(e) => setNewHabit({ ...newHabit, goal: parseInt(e.target.value) || 1 })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="habitUnit" className="text-sm font-medium">
-                      Unit
-                    </label>
-                    <Input
-                      id="habitUnit"
-                      placeholder="e.g. glasses, minutes"
-                      value={newHabit.unit}
-                      onChange={(e) => setNewHabit({ ...newHabit, unit: e.target.value })}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={() => setShowAddHabitModal(false)}>
-                Cancel
-              </Button>
-              <Button onClick={addNewHabit}>
-                Add Habit
-              </Button>
-            </CardFooter>
-          </Card>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default Index;
-
-// Missing import helper components
-const CheckCheck = (props: any) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M18 6 7 17l-5-5" />
-      <path d="m22 10-7.5 7.5L13 16" />
-    </svg>
-  );
-};
-
-const Flame = (props: any) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
-    </svg>
-  );
-};
-
-const MoreHorizontal = (props: any) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <circle cx="12" cy="12" r="1" />
-      <circle cx="19" cy="12" r="1" />
-      <circle cx="5" cy="12" r="1" />
-    </svg>
-  );
-};
-
-const Percent = (props: any) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <line x1="19" x2="5" y1="5" y2="19" />
-      <circle cx="6.5" cy="6.5" r="2.5" />
-      <circle cx="17.5" cy="17.5" r="2.5" />
-    </svg>
-  );
-};
-
-const Twitter = (props: any) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
-    </svg>
-  );
-};
-
-const Instagram = (props: any) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-    </svg>
-  );
-};
-
-const Facebook = (props: any) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-    </svg>
-  );
-};
+                <div className="grid gap-2">
+                  <label htmlFor="goal" className="text-sm font-medium leading-none">
+                    Daily Goal
+                  </label>
+                  <Input
+                    id="goal"
+                    type="number"
+                    placeholder="8"
+                    value={newHabit.goal}
+                    onChange={(
