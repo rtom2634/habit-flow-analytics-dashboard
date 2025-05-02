@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { ResponsiveContainer, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line, PieChart, Pie, Cell } from "recharts";
-import { Moon, Sun, Menu, X, Bell, Settings, ChevronRight, User, Home, BarChart3, Calendar, Droplets, Coffee, Smartphone, Moon as MoonIcon, Zap, Info, Award, TrendingUp, Heart, Check, AlertCircle, CheckCheck, Twitter, Instagram, Facebook, Flame } from "lucide-react";
+import { Moon, Sun, Menu, X, Bell, Settings, ChevronRight, User, Home, BarChart3, Calendar, Droplets, Coffee, Smartphone, Moon as MoonIcon, Zap, Info, Award, TrendingUp, Heart, Check, AlertCircle } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -750,33 +749,4 @@ const Index = () => {
                     type="number"
                     placeholder="8"
                     value={newHabit.goal}
-                    onChange={(e) => setNewHabit({ ...newHabit, goal: parseInt(e.target.value) })}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <label htmlFor="unit" className="text-sm font-medium leading-none">
-                    Unit
-                  </label>
-                  <Input
-                    id="unit"
-                    placeholder="glasses"
-                    value={newHabit.unit}
-                    onChange={(e) => setNewHabit({ ...newHabit, unit: e.target.value })}
-                  />
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between">
-              <Button variant="outline" onClick={() => setShowAddHabitModal(false)}>
-                Cancel
-              </Button>
-              <Button onClick={addNewHabit}>Create Habit</Button>
-            </CardFooter>
-          </Card>
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default Index;
+                    onChange={(
